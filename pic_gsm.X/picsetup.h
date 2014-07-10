@@ -12,8 +12,9 @@
 
 #define POWERKEY LATAbits.LATA2
 #define GSM_LED LATBbits.LATB4
-#define ERROR_LED LATBbits.LATB15
+#define RFID_LED LATBbits.LATB15
 
 void setup_pins(void);
+void pic_reset(void);
 
 #endif	/* PICSETUP_H */
