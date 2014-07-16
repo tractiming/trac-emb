@@ -62,7 +62,7 @@ int main(void) {
         gsm_pwr_off();
         pic_reset();
     }
-    GSM_LED = 1;
+    
     // Bring up the tcp connection.
     if (gsm_tcp_connect()) {
         gsm_pwr_off();
@@ -74,32 +74,32 @@ int main(void) {
     GSM_LED = 1;
 
     // Initialize the RFID reader.
-    rfid_init_uart(); // init uart here so we don't interrupt gsm init.
-    if (rfid_init())
-        pic_reset();
-    delay_ms(2000);
-    RFID_LED = 1;
+    //rfid_init_uart(); // init uart here so we don't interrupt gsm init.
+    //if (rfid_init())
+    //    pic_reset();
+    //delay_ms(2000);
+    //RFID_LED = 1;
     
     delay_ms(3000);
     while (1) {
 
         // If shutdown button pressed, disconnect tcp.
-        if (!PORTBbits.RB14)
-        {
-            // If button pressed, deactivate the GSM.
-            if (tcp_connected) {
-                gsm_tcp_close();
-                tcp_connected = 0;
-                GSM_LED = 0;
-            }
+        //if (!PORTBbits.RB14)
+        //{
+        //    // If button pressed, deactivate the GSM.
+        //    if (tcp_connected) {
+        //        gsm_tcp_close();
+        //        tcp_connected = 0;
+        //        GSM_LED = 0;
+        //    }
 
-        }
+        //}
 
         // If rfid buffer not empty, send message over gsm.
-        if (!rfid_msg_empty()) {
-            hb_cnt = 0;         // Reset heartbeat, data being sent.
-            rfid_read_bfr();
-        }
+        //if (!rfid_msg_empty()) {
+        //    hb_cnt = 0;         // Reset heartbeat, data being sent.
+        //    rfid_read_bfr();
+        //}
 
     };
     

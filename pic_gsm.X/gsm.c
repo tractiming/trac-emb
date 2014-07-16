@@ -176,7 +176,7 @@ int gsm_send_command(char *command, GSMResponse response, unsigned timeout) {
 
 }
 
-/* Establish tcp connection. */
+/* Establish tcp connection. Important comments in function body! */
 int gsm_tcp_connect(void) {
     
     // Set the context 0 as FGCNT.
@@ -195,25 +195,31 @@ int gsm_tcp_connect(void) {
     if (gsm_send_command("AT+QIMODE=1\r", GSM_OK, GSM_TIMEOUT))
         return -1;
     
-
     // Other internal settings.
-    if (gsm_send_command("AT+QITCFG=3,2,512,1\r", GSM_OK, GSM_TIMEOUT))
-        return -1;
-
+    // This line was not working properly. I am removing.
+    //if (gsm_send_command("AT+QITCFG=3,2,512,1\r", GSM_OK, GSM_TIMEOUT))
+    //    return -1;
+    
     // Use domain name as the address to establish TCP/UDP session.
     if (gsm_send_command("AT+QIDNSIP=1\r", GSM_OK, GSM_TIMEOUT))
         return -1;
-
+    
     // Register the TCP/IP stack.
     if (gsm_send_command("AT+QIREGAPP\r", GSM_OK, 3*GSM_TIMEOUT))
         return -1;
-    RFID_LED = 1;
-
+    
+    // The following pause is essential. We need to give the module some time
+    // after registering the network and asking for a gprs connection.
+    delay_ms(2000);
+    
+    
     // Activate FGCNT. Brings up the wireless connection.
     if (gsm_send_command("AT+QIACT\r", GSM_OK, 18*GSM_TIMEOUT))
         return -1;
+    RFID_LED = 1;
 
     // Establish TCP connection with server.
+    //TODO: Don't hardcode these.
     //if (gsm_send_command("AT+QIOPEN=\"TCP\",\"traclock.no-ip.biz\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
     if (gsm_send_command("AT+QIOPEN=\"TCP\",\"76.12.155.219\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
         return -1;
@@ -222,7 +228,6 @@ int gsm_tcp_connect(void) {
     gsm_data_mode = 1; 
 
     return 0;
-
 
 }
 
