@@ -1,8 +1,9 @@
 #ifndef GSM_H
 #define	GSM_H
 
-#define GSM_BUFFER_LEN 15
+#define GSM_BUFFER_LEN 25
 #define GSM_TIMEOUT 10000
+#define GSM_RETRY_ATT 2
 
 typedef enum {
     GSM_NONE = -1,
@@ -24,6 +25,8 @@ GSMResponse gsm_get_response(void);
 int gsm_send_command(char*, GSMResponse, unsigned);
 int gsm_tcp_send_data(char*);
 unsigned gsm_get_data_mode(void);
+unsigned gsm_chk_tcp_conn(void);
+int gsm_tcp_reset(void);
 
 #endif	/* GSM_H */
 

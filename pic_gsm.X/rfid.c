@@ -26,12 +26,43 @@ int tag_read=0;
 }*/
 
 /* Initialize the RFID reader. */
+// TODO: Make sure alien startup has completed.
+// NOTE: This assumes uart has already been opened.
 int rfid_init(void) {
 
-    delay_ms(2000);
-
     // Clear the buffer.
+    delay_ms(2000);
     msg_bfr_clr();
+
+    // TODO: Test this!
+    // Wait for the reader to respond when enter is sent.
+    /*int k;
+    WriteCoreTimer(0);
+    while (1) {
+
+        put_character(RFID_UART, "\r");
+        delay_ms(200);
+
+        if (!rfid_msg_empty()) {
+
+            // Simply look through the buffer for the ">" symbol.
+            for
+            if (1) {
+                msg_bfr_clr();
+                return 0;
+            }
+        }
+
+        if (ReadCoreTimer() > 40000*RFID_TIMEOUT*2)
+            return -1;
+
+    }*/
+}
+
+/* Sets the reader in auto-notification mode to send a message when a tag is 
+ * read.*/
+// TODO: Make sure these commands are read.
+int rfid_reader_config(void) {
 
     // Configure auto mode.
     write_string(RFID_UART, "PersistTime=10\r\n");

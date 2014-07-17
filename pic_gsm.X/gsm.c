@@ -10,6 +10,7 @@ char gsm_response_buffer[GSM_BUFFER_LEN];
 GSMResponse gsm_state;
 int response_rcvd = 0;
 unsigned int gsm_data_mode=0;
+unsigned int gsm_tcp_lost=0;
 
 /* Get index of nth previous char in buffer, accounting for wraparound. */
 int buffer_indx_prev(int n) {
@@ -37,8 +38,7 @@ void gsm_update_state(char data) {
         response_rcvd = 1;
         gsm_state = GSM_OK;
     }
-    else if ((gsm_response_buffer[gsm_buffer_indx] == ' ') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == '>')) {
+    else if ((gsm_response_buffer[gsm_buffer_indx] == '>')) {
         response_rcvd = 1;
         gsm_state = GSM_READY;
     }
@@ -54,15 +54,17 @@ void gsm_update_state(char data) {
     //    gsm_state = GSM_CONNECT;
     //}
 
-    //else if ((gsm_response_buffer[gsm_buffer_indx] == 'D') &&
-    //         (gsm_response_buffer[buffer_indx_prev(1)] == 'E') &&
-    //         (gsm_response_buffer[buffer_indx_prev(2)] == 'S') &&
-    //         (gsm_response_buffer[buffer_indx_prev(3)] == 'O') &&
-    //         (gsm_response_buffer[buffer_indx_prev(4)] == 'L') &&
-    //         (gsm_response_buffer[buffer_indx_prev(5)] == 'C')) {
-    //    response_rcvd = 1;
-    //    gsm_state = GSM_CLOSED;
-    //}
+    else if ((gsm_response_buffer[gsm_buffer_indx] == 'D') &&
+             (gsm_response_buffer[buffer_indx_prev(1)] == 'E') &&
+             (gsm_response_buffer[buffer_indx_prev(2)] == 'S') &&
+             (gsm_response_buffer[buffer_indx_prev(3)] == 'O') &&
+             (gsm_response_buffer[buffer_indx_prev(4)] == 'L') &&
+             (gsm_response_buffer[buffer_indx_prev(5)] == 'C')) {
+        response_rcvd = 1;
+        gsm_state = GSM_CLOSED;
+        if (gsm_data_mode)
+            gsm_tcp_lost = 1;
+    }
 
 }
 
@@ -100,10 +102,9 @@ void gsm_pwr_off(void) {
     delay_ms(12000);
 }
 
-/* Checks if sim card is present and network is active. */
+/* Checks if sim card is present. */
 int gsm_chk_sim(void) {
     
-    // Check if sim card is present.
     if (gsm_send_command("AT+CPIN?\r", GSM_OK, GSM_TIMEOUT))
         return -1;
 
@@ -116,8 +117,8 @@ int gsm_init(void) {
     // Reset buffer and state.
     gsm_buffer_indx = 0;
     gsm_data_mode = 0;
+    gsm_tcp_lost = 0;
     gsm_state = GSM_NONE;
-    GSM_LED = 0;
 
     // Pull powerkey low to turn on module.
     gsm_pwr_on();
@@ -137,16 +138,15 @@ int gsm_init(void) {
     // Set mode to text.
     if (gsm_send_command("AT+CMGF=1\r", GSM_OK, 5*GSM_TIMEOUT))
         return -1;
+
     delay_ms(1000);
-    //    return -1;
     
-    // Turn on LED to indicate GSM is initialized.
     return 0;
 
 }
 
 /* Send a command to the gsm module and wait for a response. */
-int gsm_send_command2(char *command, GSMResponse response) {
+int gsm_send_command_old(char *command, GSMResponse response) {
 
     write_string(GSM_UART, command);
 
@@ -182,41 +182,47 @@ int gsm_tcp_connect(void) {
     // Set the context 0 as FGCNT.
     if (gsm_send_command("AT+QIFGCNT=0\r", GSM_OK, GSM_TIMEOUT))
         return -1;
+    delay_ms(100);
     
     // Set APN.
     if (gsm_send_command("AT+QICSGP=1,\"ATT.MVNO\"\r", GSM_OK, GSM_TIMEOUT))
         return -1;
+    delay_ms(100);
 
     // Disable function of MUXIP. (Set as single connection mode.) )
     if (gsm_send_command("AT+QIMUX=0\r", GSM_OK, GSM_TIMEOUT))
         return -1;
+    delay_ms(100);
 
-    // Set the session mode as tranparent.
-    if (gsm_send_command("AT+QIMODE=1\r", GSM_OK, GSM_TIMEOUT))
+    // Set the session mode as transparent.
+    // NOTE: for some reason, this always fails whenever the status of the SIM card
+    // is queried before calling this function. don't ask...
+    if (gsm_send_command("AT+QIMODE=1\r", GSM_OK, 2*GSM_TIMEOUT))
         return -1;
+    delay_ms(100);
     
     // Other internal settings.
-    // This line was not working properly. I am removing.
-    //if (gsm_send_command("AT+QITCFG=3,2,512,1\r", GSM_OK, GSM_TIMEOUT))
-    //    return -1;
-    
-    // Use domain name as the address to establish TCP/UDP session.
-    if (gsm_send_command("AT+QIDNSIP=1\r", GSM_OK, GSM_TIMEOUT))
+    if (gsm_send_command("AT+QITCFG=3,2,512,1\r", GSM_OK, GSM_TIMEOUT))
         return -1;
+
+    // NOTE: The default behavior is to expect a dotted IP address.
+    // Use IP address (not domain name) as the address to establish TCP/UDP session.
+    //if (gsm_send_command("AT+QIDNSIP=0\r", GSM_OK, GSM_TIMEOUT))
+    //    return -1;
+    //delay_ms(100);
     
     // Register the TCP/IP stack.
     if (gsm_send_command("AT+QIREGAPP\r", GSM_OK, 3*GSM_TIMEOUT))
         return -1;
     
     // The following pause is essential. We need to give the module some time
-    // after registering the network and asking for a gprs connection.
+    // after registering the network and before asking for a gprs connection.
     delay_ms(2000);
-    
     
     // Activate FGCNT. Brings up the wireless connection.
     if (gsm_send_command("AT+QIACT\r", GSM_OK, 18*GSM_TIMEOUT))
         return -1;
-    RFID_LED = 1;
+    delay_ms(100);
 
     // Establish TCP connection with server.
     //TODO: Don't hardcode these.
@@ -233,10 +239,15 @@ int gsm_tcp_connect(void) {
 
 // Closes the tcp connection and deactivates gprs.
 int gsm_tcp_close(void) {
+
     // Switch back to AT command mode.
-    if (gsm_send_command("+++", GSM_OK, GSM_TIMEOUT))
-        return -1;
-    gsm_data_mode = 0;
+    if (gsm_data_mode) {
+        delay_ms(500);
+        if (gsm_send_command("+++", GSM_OK, GSM_TIMEOUT))
+            return -1;
+        delay_ms(500);
+        gsm_data_mode = 0;
+    }
 
     // Close the connection.
     if (gsm_send_command("AT+QICLOSE\r", GSM_OK, GSM_TIMEOUT))
@@ -267,6 +278,36 @@ int gsm_tcp_send_data(char *data) {
 /* Returns whether the gsm is in data or text mode. */
 unsigned gsm_get_data_mode(void) {
     return gsm_data_mode;
+}
+
+/* Returns 1 if the connection has been lost. */
+unsigned gsm_chk_tcp_conn(void) {
+    return gsm_tcp_lost;
+}
+
+/* Resets the tcp connection after a failure. */
+int gsm_tcp_reset(void) {
+
+    // Assume the abnormaility was caught by the "closed" command,
+    // then the gsm is already in command mode.
+    gsm_data_mode = 0;
+
+    // Failed to close the connection.
+    if (gsm_tcp_close())
+        return -1;
+
+    int k=0;
+    while (k<=GSM_RETRY_ATT) {
+        
+        if (gsm_tcp_connect()) {
+            gsm_tcp_lost = 0;
+            return 0;
+        }
+        k++;
+    }
+
+    return -1;
+
 }
 
 

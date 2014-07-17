@@ -9,6 +9,7 @@
 #define	RFID_H
 
 #define MAX_TAG_MSG_LEN 50
+#define RFID_TIMEOUT 10000
 
 typedef struct {
     char tag_str[MAX_TAG_MSG_LEN];

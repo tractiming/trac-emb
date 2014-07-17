@@ -27,7 +27,6 @@
 
 #define MAX_LEN 100
 
-//char rfid_bfr[MAX_LEN];
 int tcp_connected;
 int hb_cnt;
 
@@ -51,24 +50,13 @@ int main(void) {
     INTEnableSystemMultiVectoredInt();
     delay_ms(5000);
 
-    // Initialize the GSM module. (Turn on and sync baudrate.)
-    if (gsm_init()) {
+    // Initialize the GSM module:
+    //     1. Turn on and sync baudrate.
+    //     2. Bring up the tcp connection.
+    if (gsm_init() || gsm_tcp_connect()) {
         gsm_pwr_off();
         pic_reset();
     }
- 
-    // Check that the sim card is ready.
-    if (gsm_chk_sim()) {
-        gsm_pwr_off();
-        pic_reset();
-    }
-    
-    // Bring up the tcp connection.
-    if (gsm_tcp_connect()) {
-        gsm_pwr_off();
-        pic_reset();
-    }
-
     tcp_connected = 1;
     delay_ms(5000);
     GSM_LED = 1;
@@ -78,10 +66,23 @@ int main(void) {
     //if (rfid_init())
     //    pic_reset();
     //delay_ms(2000);
-    //RFID_LED = 1;
+    RFID_LED = 1;
     
-    delay_ms(3000);
+    //delay_ms(3000);
     while (1) {
+
+        // Check to make sure the connection is being maintained.
+        if (gsm_chk_tcp_conn()) {
+            GSM_LED = 0;
+
+            // Try to reset the connection. If this fails, shutdown
+            // the pic and try to boot again.
+            if (gsm_tcp_reset()) {
+                gsm_pwr_off();
+                pic_reset();
+            }
+            GSM_LED = 1;
+        }
 
         // If shutdown button pressed, disconnect tcp.
         //if (!PORTBbits.RB14)
