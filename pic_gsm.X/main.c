@@ -73,6 +73,7 @@ int main(void) {
 
         // Check to make sure the connection is being maintained.
         if (gsm_chk_tcp_conn()) {
+            tcp_connected = 0;
             GSM_LED = 0;
 
             // Try to reset the connection. If this fails, shutdown
@@ -81,6 +82,7 @@ int main(void) {
                 gsm_pwr_off();
                 pic_reset();
             }
+            tcp_connected = 1;
             GSM_LED = 1;
         }
 

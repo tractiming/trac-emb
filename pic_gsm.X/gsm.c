@@ -66,6 +66,14 @@ void gsm_update_state(char data) {
             gsm_tcp_lost = 1;
     }
 
+    else if ((gsm_response_buffer[gsm_buffer_indx] == 'N') &&
+             (gsm_response_buffer[buffer_indx_prev(1)] == 'W') &&
+             (gsm_response_buffer[buffer_indx_prev(2)] == 'O') &&
+             (gsm_response_buffer[buffer_indx_prev(3)] == 'D')) {
+        response_rcvd = 1;
+        gsm_state = GSM_PWR_DOWN;
+    }
+
 }
 
 /* Returns the state of the gsm module. */
@@ -98,8 +106,11 @@ void gsm_pwr_on(void) {
    NOTE: The GSM2 click does not provide a pin for EMERG_OFF. */
 void gsm_pwr_off(void) {
     // Pull power key to low. Safe to shut off after 12s.
-    POWERKEY = 0;
-    delay_ms(12000);
+    gsm_send_command("AT+QPOWD=1\r", GSM_PWR_DOWN, GSM_TIMEOUT);
+    //POWERKEY = 0;
+    //delay_ms(750);
+    //POWERKEY = 1;
+    //delay_ms(12000);
 }
 
 /* Checks if sim card is present. */
@@ -226,6 +237,7 @@ int gsm_tcp_connect(void) {
 
     // Establish TCP connection with server.
     //TODO: Don't hardcode these.
+    //TODO: Wait for "connect" status.
     //if (gsm_send_command("AT+QIOPEN=\"TCP\",\"traclock.no-ip.biz\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
     if (gsm_send_command("AT+QIOPEN=\"TCP\",\"76.12.155.219\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
         return -1;
@@ -292,21 +304,24 @@ int gsm_tcp_reset(void) {
     // then the gsm is already in command mode.
     gsm_data_mode = 0;
 
-    // Failed to close the connection.
-    if (gsm_tcp_close())
+    // Since connection is already closed, deactivate GPRS context.
+    if (gsm_send_command("AT+QIDEACT\r", GSM_OK, 3*GSM_TIMEOUT))
         return -1;
 
-    int k=0;
-    while (k<=GSM_RETRY_ATT) {
-        
-        if (gsm_tcp_connect()) {
-            gsm_tcp_lost = 0;
-            return 0;
-        }
-        k++;
-    }
+    delay_ms(1000);
 
-    return -1;
+    // Reactivate the GPRS.
+    if (gsm_send_command("AT+QIACT\r", GSM_OK, 10*GSM_TIMEOUT))
+        return -1;
+
+    delay_ms(1000);
+
+    // Try to connect to the server.
+    if (gsm_send_command("AT+QIOPEN=\"TCP\",\"76.12.155.219\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
+        return -1;
+
+    gsm_data_mode = 1;
+    return 0;
 
 }
 

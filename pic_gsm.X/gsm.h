@@ -13,6 +13,7 @@ typedef enum {
     GSM_UNREAD = 3,
     GSM_CONNECT = 4,
     GSM_CLOSED = 5,
+    GSM_PWR_DOWN = 6,
 } GSMResponse;
 
 void delay_ms(unsigned int);

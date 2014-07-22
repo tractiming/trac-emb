@@ -17,13 +17,29 @@ int msg_tail;
 int tag_read=0;
 
 /* Get index of nth previous char in buffer, accounting for wraparound. */
-/*int prev_indx(int n) {
-    int i = rfid_msg_indx - n;
+// TODO: check that we are not reading random bytes.
+int rfid_indx_prev(int n) {
+    int i =  msg_head - n;
     if (i >= 0)
         return i;
     else
         return MAX_MSG_LEN+i;
-}*/
+}
+
+/* Checks to see if the "Alien>" prompt is displayed. */
+int rfid_is_ready(void) {
+    if ((msg_bfr[msg_head] == '>') &&
+            (msg_bfr[rfid_indx_prev(1)] == 'n') &&
+            (msg_bfr[rfid_indx_prev(2)] == 'e') &&
+            (msg_bfr[rfid_indx_prev(3)] == 'i') &&
+            (msg_bfr[rfid_indx_prev(4)] == 'l') &&
+            (msg_bfr[rfid_indx_prev(5)] == 'A'))
+        return 1;
+
+    else
+        return 0;
+
+}
 
 /* Initialize the RFID reader. */
 // TODO: Make sure alien startup has completed.
@@ -36,27 +52,24 @@ int rfid_init(void) {
 
     // TODO: Test this!
     // Wait for the reader to respond when enter is sent.
-    /*int k;
-    WriteCoreTimer(0);
+    int num_att = 100;
+    int k=0;
     while (1) {
 
-        put_character(RFID_UART, "\r");
-        delay_ms(200);
+        write_string(RFID_UART, "\r");
+        delay_ms(1500);
 
-        if (!rfid_msg_empty()) {
-
-            // Simply look through the buffer for the ">" symbol.
-            for
-            if (1) {
-                msg_bfr_clr();
-                return 0;
-            }
+        if (rfid_is_ready()) {
+            msg_bfr_clr();
+            return 0;
         }
 
-        if (ReadCoreTimer() > 40000*RFID_TIMEOUT*2)
+        if (k > num_att)
             return -1;
 
-    }*/
+        k++;
+
+    }
 }
 
 /* Sets the reader in auto-notification mode to send a message when a tag is 
