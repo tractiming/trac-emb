@@ -49,10 +49,12 @@ int rfid_init(void) {
     // Clear the buffer.
     delay_ms(2000);
     msg_bfr_clr();
+    rfid_reader_config();
+    delay_ms(2000);
 
     // TODO: Test this!
     // Wait for the reader to respond when enter is sent.
-    int num_att = 100;
+    /*int num_att = 100;
     int k=0;
     while (1) {
 
@@ -69,7 +71,7 @@ int rfid_init(void) {
 
         k++;
 
-    }
+    }*/
 }
 
 /* Sets the reader in auto-notification mode to send a message when a tag is 

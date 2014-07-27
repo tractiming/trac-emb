@@ -62,10 +62,10 @@ int main(void) {
     GSM_LED = 1;
 
     // Initialize the RFID reader.
-    //rfid_init_uart(); // init uart here so we don't interrupt gsm init.
-    //if (rfid_init())
-    //    pic_reset();
-    //delay_ms(2000);
+    rfid_init_uart(); // init uart here so we don't interrupt gsm init.
+    if (rfid_init())
+        pic_reset();
+    delay_ms(2000);
     RFID_LED = 1;
     
     //delay_ms(3000);
@@ -99,10 +99,10 @@ int main(void) {
         //}
 
         // If rfid buffer not empty, send message over gsm.
-        //if (!rfid_msg_empty()) {
-        //    hb_cnt = 0;         // Reset heartbeat, data being sent.
-        //    rfid_read_bfr();
-        //}
+        if (!rfid_msg_empty()) {
+            hb_cnt = 0;         // Reset heartbeat, data being sent.
+            rfid_read_bfr();
+        }
 
     };
     
