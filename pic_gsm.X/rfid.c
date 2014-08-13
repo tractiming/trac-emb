@@ -7,13 +7,13 @@
 #define MAX_NO_TAGS 2
 #define MAX_TAG_LEN 30
 #define MAX_MSG_LEN 50
+#define BOOT_WAIT 90
 
 #define NXT_INDX(i,mx) ((i+1) % mx)
 
 char msg_bfr[MAX_MSG_LEN];
 int msg_head;
 int msg_tail;
-
 int tag_read=0;
 
 /* Get index of nth previous char in buffer, accounting for wraparound. */
@@ -26,94 +26,17 @@ int rfid_indx_prev(int n) {
         return MAX_MSG_LEN+i;
 }
 
-/* Checks to see if the "Alien>" prompt is displayed. */
-int rfid_is_ready(void) {
-    if ((msg_bfr[msg_head] == '>') &&
-            (msg_bfr[rfid_indx_prev(1)] == 'n') &&
-            (msg_bfr[rfid_indx_prev(2)] == 'e') &&
-            (msg_bfr[rfid_indx_prev(3)] == 'i') &&
-            (msg_bfr[rfid_indx_prev(4)] == 'l') &&
-            (msg_bfr[rfid_indx_prev(5)] == 'A'))
-        return 1;
-
-    else
-        return 0;
-
-}
-
 /* Initialize the RFID reader. */
-// TODO: Make sure alien startup has completed.
-// NOTE: This assumes uart has already been opened.
 int rfid_init(void) {
 
-    // Clear the buffer.
-    delay_ms(2000);
+    // Note: the auto-notification settings are saved to flash memory on the
+    // reader, so it will automatically send messages as soon as boot is
+    // completed. Here we simply wait for the boot to finish.
     msg_bfr_clr();
-    rfid_reader_config();
-    delay_ms(2000);
-
-    // TODO: Test this!
-    // Wait for the reader to respond when enter is sent.
-    /*int num_att = 100;
-    int k=0;
-    while (1) {
-
-        write_string(RFID_UART, "\r");
-        delay_ms(1500);
-
-        if (rfid_is_ready()) {
-            msg_bfr_clr();
-            return 0;
-        }
-
-        if (k > num_att)
-            return -1;
-
-        k++;
-
-    }*/
-}
-
-/* Sets the reader in auto-notification mode to send a message when a tag is 
- * read.*/
-// TODO: Make sure these commands are read.
-int rfid_reader_config(void) {
-
-    // Configure auto mode.
-    write_string(RFID_UART, "PersistTime=10\r\n");
-    delay_ms(600);
-    write_string(RFID_UART, "AutoModeReset\r");
-    delay_ms(600);
-    write_string(RFID_UART, "AutoAction = Acquire\r");
-    delay_ms(600);
-    write_string(RFID_UART, "AutoStartTrigger = 0,0\r");
-    delay_ms(600);
-    write_string(RFID_UART, "AutoStopTimer = 0\r");
-    delay_ms(600);
-    write_string(RFID_UART, "NotifyAddress = serial\r");
-    delay_ms(600);
-    write_string(RFID_UART, "NotifyTrigger = Add\r");
-    delay_ms(600);
-    write_string(RFID_UART, "NotifyMode = On\r");
-    delay_ms(600);
-    write_string(RFID_UART, "AutoMode = On\r");
-    delay_ms(600);
-
+    delay_ms(BOOT_WAIT*1000);
     return 0;
+    
 }
-
-/*void rfid_get_response(char data) {
-
-    // Add byte to buffer
-    rfid_msg_indx++;
-    if (rfid_buffer_indx == MAX_TAG_LEN)
-        rfid_buffer_indx = -1;
-    rfid_response_buffer[rfid_buffer_indx] = data;
-
-    if (rfid_response_buffer[rfid_buffer_indx]);
-
-
-}*/
 
 /* Clear the message buffer. */
 void msg_bfr_clr(void) {
@@ -122,7 +45,6 @@ void msg_bfr_clr(void) {
     msg_tail = 0;
 
 }
-
 
 /* Returns 1 if buffer is empty, 0 otherwise. */
 int rfid_msg_empty(void) {
@@ -149,3 +71,71 @@ void rfid_read_bfr(void) {
     msg_tail = NXT_INDX(msg_tail, MAX_MSG_LEN);
 
 }
+
+
+/* Checks to see if the "Alien>" prompt is displayed. */
+/*void rfid_ready_check(void) {
+    if ((msg_bfr[msg_head] == '>') &&
+            (msg_bfr[rfid_indx_prev(1)] == 'n') &&
+            (msg_bfr[rfid_indx_prev(2)] == 'e') &&
+            (msg_bfr[rfid_indx_prev(3)] == 'i') &&
+            (msg_bfr[rfid_indx_prev(4)] == 'l') &&
+            (msg_bfr[rfid_indx_prev(5)] == 'A'))
+        alien_rdy = 1;
+}
+*/
+/* Sets the reader in auto-notification mode to send a message when a tag is
+ * read.*/
+// TODO: Make sure these commands are read.
+// OBSOLETE!
+/*int rfid_reader_config(void) {
+
+    // Configure auto mode.
+    write_string(RFID_UART, "PersistTime=10\r\n");
+    delay_ms(600);
+    write_string(RFID_UART, "AutoModeReset\r");
+    delay_ms(600);
+    write_string(RFID_UART, "AutoAction = Acquire\r");
+    delay_ms(600);
+    write_string(RFID_UART, "AutoStartTrigger = 0,0\r");
+    delay_ms(600);
+    write_string(RFID_UART, "AutoStopTimer = 0\r");
+    delay_ms(600);
+    write_string(RFID_UART, "NotifyAddress = serial\r");
+    delay_ms(600);
+    write_string(RFID_UART, "NotifyTrigger = Add\r");
+    delay_ms(600);
+    write_string(RFID_UART, "NotifyMode = On\r");
+    delay_ms(600);
+    write_string(RFID_UART, "AutoMode = On\r");
+    delay_ms(600);
+
+    return 0;
+}*/
+
+/*
+//rfid_reader_config();
+    //delay_ms(2000);
+
+    // TODO: Test this!
+    // Wait for the reader to respond when enter is sent.
+    int num_att = 100;
+    int k=0;
+    while (1) {
+
+        write_string(RFID_UART, "\r\n");
+        delay_ms(1500);
+
+        if (alien_rdy) {
+            msg_bfr_clr();
+            check_response = 0;
+            return 0;
+        }
+
+        if (k > num_att)
+            return -1;
+
+        k++;
+
+    }
+*/

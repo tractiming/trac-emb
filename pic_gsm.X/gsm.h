@@ -28,6 +28,9 @@ int gsm_tcp_send_data(char*);
 unsigned gsm_get_data_mode(void);
 unsigned gsm_chk_tcp_conn(void);
 int gsm_tcp_reset(void);
+int gsm_gprs_init(void);
+int gsm_set_http_url(void);
+int gsm_http_post(const char*);
 
 #endif	/* GSM_H */
 

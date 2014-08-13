@@ -44,16 +44,23 @@ int main(void) {
     // Set up UART communication with GSM. Establish heartbeat. These are only
     // setting registers on the pic, so don't worry about failure.
     gsm_init_uart();
-    hb_tmr_init();
+    //hb_tmr_init();
 
     // Start interrupts (allows pic to receive uart messages).
     INTEnableSystemMultiVectoredInt();
     delay_ms(5000);
+    gsm_init();
+    if (!gsm_gprs_init())
+        RFID_LED=1;
+    if (!gsm_set_http_url())
+        GSM_LED=0;
+    if (!gsm_http_post("Hello world"))
+        RFID_LED=0;
 
     // Initialize the GSM module:
     //     1. Turn on and sync baudrate.
     //     2. Bring up the tcp connection.
-    if (gsm_init() || gsm_tcp_connect()) {
+    /*if (gsm_init() || gsm_tcp_connect()) {
         gsm_pwr_off();
         pic_reset();
     }
@@ -67,12 +74,12 @@ int main(void) {
         pic_reset();
     delay_ms(2000);
     RFID_LED = 1;
-    
+    */
     //delay_ms(3000);
     while (1) {
 
         // Check to make sure the connection is being maintained.
-        if (gsm_chk_tcp_conn()) {
+        /*if (gsm_chk_tcp_conn()) {
             tcp_connected = 0;
             GSM_LED = 0;
 
@@ -102,7 +109,7 @@ int main(void) {
         if (!rfid_msg_empty()) {
             hb_cnt = 0;         // Reset heartbeat, data being sent.
             rfid_read_bfr();
-        }
+        }*/
 
     };
     
