@@ -4,10 +4,10 @@
 #include "gsm.h"
 #include "rfid.h"
 
-#define MAX_NO_TAGS 2
-#define MAX_TAG_LEN 30
+#define MAX_NO_TAGS 20
+#define MAX_TAG_LEN 150
 #define MAX_MSG_LEN 50
-#define BOOT_WAIT 90
+#define BOOT_WAIT 5
 
 #define NXT_INDX(i,mx) ((i+1) % mx)
 
@@ -16,8 +16,12 @@ int msg_head;
 int msg_tail;
 int tag_read=0;
 
+char tag_data[MAX_NO_TAGS][MAX_TAG_LEN];
+int tag_head;
+int tag_tail;
+int s_indx;
+
 /* Get index of nth previous char in buffer, accounting for wraparound. */
-// TODO: check that we are not reading random bytes.
 int rfid_indx_prev(int n) {
     int i =  msg_head - n;
     if (i >= 0)
@@ -32,14 +36,59 @@ int rfid_init(void) {
     // Note: the auto-notification settings are saved to flash memory on the
     // reader, so it will automatically send messages as soon as boot is
     // completed. Here we simply wait for the boot to finish.
-    msg_bfr_clr();
     delay_ms(BOOT_WAIT*1000);
+    rfid_clear_tags();
     return 0;
-    
+   
 }
 
 /* Clear the message buffer. */
-void msg_bfr_clr(void) {
+void rfid_clear_tags(void) {
+
+    tag_head = 0;
+    tag_tail = 0;
+    s_indx = 0;
+
+}
+
+/* Returns 1 if buffer is not empty, 0 otherwise. */
+int rfid_tag_ready(void) {
+
+    if (tag_head == tag_tail)
+        return 0;
+    else
+        return 1;
+
+}
+
+/* Writes a byte to the head of the buffer. */
+void rfid_write_bfr(char c) {
+
+    tag_data[tag_head][s_indx] = c;
+
+    // Check if the message is complete.
+    if (c == 'T') {
+        //tag_data[tag_head][NXT_INDX(s_indx, MAX_TAG_LEN)] = '\0';
+        tag_head = NXT_INDX(tag_head, MAX_NO_TAGS);
+        //s_indx = 0;
+    }
+
+    //else
+    //    s_indx = NXT_INDX(s_indx, MAX_TAG_LEN);
+
+}
+
+void rfid_read_bfr(void) {
+    if (rfid_tag_ready()) {
+        //gsm_http_post(tag_data[tag_tail]);
+        gsm_http_post("Hello\n");
+        tag_tail = NXT_INDX(tag_tail, MAX_NO_TAGS);
+    }
+}
+
+
+/* Clear the message buffer. */
+void msg_bfr_clr_old(void) {
 
     msg_head = 0;
     msg_tail = 0;
@@ -47,7 +96,7 @@ void msg_bfr_clr(void) {
 }
 
 /* Returns 1 if buffer is empty, 0 otherwise. */
-int rfid_msg_empty(void) {
+int rfid_msg_empty_old(void) {
 
     if (msg_head == msg_tail)
         return 1;
@@ -57,7 +106,7 @@ int rfid_msg_empty(void) {
 }
 
 /* Writes a byte to the head of the buffer. */
-void rfid_write_bfr(char c) {
+void rfid_write_bfr_old(char c) {
 
     msg_head = NXT_INDX(msg_head, MAX_MSG_LEN);
     msg_bfr[msg_head] = c;
@@ -65,7 +114,7 @@ void rfid_write_bfr(char c) {
 }
 
 /* Prints tail of buffer to GSM. */
-void rfid_read_bfr(void) {
+void rfid_read_bfr_old(void) {
 
     put_character(GSM_UART, msg_bfr[msg_tail]);
     msg_tail = NXT_INDX(msg_tail, MAX_MSG_LEN);

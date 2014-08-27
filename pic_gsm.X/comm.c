@@ -23,6 +23,7 @@ void gsm_init_uart(void) {
     INTSetVectorSubPriority(GSM_INT_VEC, INT_SUB_PRIORITY_LEVEL_0);
 };
 
+/* Initialize RFID communication. */
 void rfid_init_uart(void) {
 
     UARTConfigure(RFID_UART, UART_ENABLE_PINS_TX_RX_ONLY );
@@ -36,6 +37,7 @@ void rfid_init_uart(void) {
     INTSetVectorSubPriority(RFID_INT_VEC, INT_SUB_PRIORITY_LEVEL_0);
 };
 
+/* Open heartbeat timer. Not needed if connections are not persistent. */
 void hb_tmr_init(void) {
     // Configured at 10 Hz by default.
     OpenTimer2(T2_ON | T2_PS_1_256 | T2_SOURCE_INT, 15624);

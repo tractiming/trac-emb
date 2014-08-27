@@ -17,12 +17,10 @@ typedef struct {
 } TagData;
 
 int rfid_init(void);
-void msg_bfr_clr(void);
-int rfid_msg_empty(void);
+void rfid_clear_tags(void);
+int rfid_tag_ready(void);
 void rfid_write_bfr(char c);
 void rfid_read_bfr(void);
-
-
 
 
 #endif	/* RFID_H */

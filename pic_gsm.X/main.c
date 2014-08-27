@@ -49,13 +49,19 @@ int main(void) {
     // Start interrupts (allows pic to receive uart messages).
     INTEnableSystemMultiVectoredInt();
     delay_ms(5000);
-    gsm_init();
-    if (!gsm_gprs_init())
-        RFID_LED=1;
-    if (!gsm_set_http_url())
+    if (!gsm_init())
         GSM_LED=0;
-    if (!gsm_http_post("Hello world"))
-        RFID_LED=0;
+    if (!gsm_gprs_init())
+        GSM_LED=0;
+    //if (!gsm_http_post_raw("Hello"))
+    //    RFID_LED=1;
+    if (!gsm_set_http_url())
+        GSM_LED=1;
+    //if (gsm_http_post("Hello you\r\n"))
+        //RFID_LED=0;
+    gsm_http_post("m=Hello");
+    //if (!gsm_http_post("Hello world"))
+    //    RFID_LED=0;
 
     // Initialize the GSM module:
     //     1. Turn on and sync baudrate.
@@ -66,17 +72,30 @@ int main(void) {
     }
     tcp_connected = 1;
     delay_ms(5000);
-    GSM_LED = 1;
+    GSM_LED = 1;*/
 
     // Initialize the RFID reader.
-    rfid_init_uart(); // init uart here so we don't interrupt gsm init.
-    if (rfid_init())
-        pic_reset();
-    delay_ms(2000);
-    RFID_LED = 1;
-    */
+    //rfid_init_uart(); // init uart here so we don't interrupt gsm init.
+    //if (rfid_init())
+    //    pic_reset();
+    //delay_ms(3000);
+    //RFID_LED = 1;
+    
     //delay_ms(3000);
     while (1) {
+        gsm_http_post("m=Testing");
+        delay_ms(1000);
+        if (!PORTBbits.RB14)
+        {
+            if (gsm_http_post("m=Test"))
+            {
+                //gsm_send_command("AT+QIDEACT\r", GSM_OK, 10*GSM_TIMEOUT);
+                delay_ms(100);
+                //gsm_send_command("AT+QIACT\r", GSM_OK, 10*GSM_TIMEOUT);
+            }
+            delay_ms(50);
+        }
+
 
         // Check to make sure the connection is being maintained.
         /*if (gsm_chk_tcp_conn()) {
@@ -103,10 +122,13 @@ int main(void) {
         //        GSM_LED = 0;
         //    }
 
-        //}
+        //}*/
 
-        // If rfid buffer not empty, send message over gsm.
-        if (!rfid_msg_empty()) {
+        // Post any new data in the tag buffer.
+        //rfid_read_bfr();
+        //gsm_http_post("Testing");
+        //delay_ms(10000);
+        /*if (!rfid_msg_empty()) {
             hb_cnt = 0;         // Reset heartbeat, data being sent.
             rfid_read_bfr();
         }*/

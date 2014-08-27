@@ -1,10 +1,9 @@
 #include <plib.h>
 #include <string.h>
+#include <stdlib.h>
 #include "picsetup.h"
 #include "gsm.h"
 #include "comm.h"
-
-//const char APN[] = "att.mvno";
 
 int gsm_buffer_indx = 0;
 char gsm_response_buffer[GSM_BUFFER_LEN];
@@ -13,7 +12,10 @@ int response_rcvd = 0;
 unsigned int gsm_data_mode=0;
 unsigned int gsm_tcp_lost=0;
 
-const char domain_name[] = "http:traclock.no-ip.biz:8000/update/";
+const char IP[] = "http://traclock.no-ip.biz";
+const char APN[] = "ATT.MVNO";
+int PORT = 8000;
+const char post_domain_name[] = "http://traclock.no-ip.biz:8000/update/";
 
 /* Get index of nth previous char in buffer, accounting for wraparound. */
 int buffer_indx_prev(int n) {
@@ -150,12 +152,6 @@ int gsm_init(void) {
     }
     delay_ms(5000);
 
-    // Set mode to text.
-    if (gsm_send_command("AT+CMGF=1\r", GSM_OK, 5*GSM_TIMEOUT))
-        return -1;
-
-    delay_ms(1000);
-    
     return 0;
 
 }
@@ -214,40 +210,59 @@ int gsm_gprs_init(void) {
 
 }
 
-/* Establish TCP connection with server. This assumes that the GPRS is already
- * activated and the server is listening on the correct port.
- */
-int gsm_tcp_connect(void) {
-    if (gsm_send_command("AT+QIOPEN=\"TCP\",\"76.12.155.219\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
-        return -1;
-    return 0;
-}
-
 /* Sets the HTTP url to send data to. */
 int gsm_set_http_url(void) {
 
-    if (gsm_send_command("AT+QHTTPURL=38,45\r", GSM_CONNECT, GSM_TIMEOUT))
+    int len = strlen(post_domain_name);
+    char msg[100];
+    sprintf(msg, "AT+QHTTPURL=%i,15\r", len);
+
+    if (gsm_send_command(msg, GSM_CONNECT, 5*GSM_TIMEOUT))
         return -1;
     delay_ms(100);
 
-    write_string(GSM_UART, "http://traclock.no-ip.biz:8000/update/");
+    write_string(GSM_UART, post_domain_name);
     return gsm_wait_for_response(GSM_OK, GSM_TIMEOUT);
 
 }
 
-/* Sends an HTTP POST request. */
-int gsm_http_post(const char* data) {
+/* Sends an HTTP POST request to the server. This assumes the http url is set.*/
+int gsm_http_post(char* data) {
 
     int len = strlen(data);
+    if (len > GSM_MAX_HTTP_LEN)
+        return -1;
+    
     char msg[100];
-    sprintf(msg, "AT+QHTTPPOST=%i,50,10\r\n", len);
+    sprintf(msg, "AT+QHTTPPOST=%i,5,1\r", len);
 
     if (gsm_send_command(msg, GSM_CONNECT, GSM_TIMEOUT))
         return -1;
+    delay_ms(25); // This pause is really important!
 
     write_string(GSM_UART, data);
-    return gsm_wait_for_response(GSM_OK, GSM_TIMEOUT);
+    return gsm_wait_for_response(GSM_OK, GSM_TIMEOUT/100);
 
+}
+
+/* Establish TCP connection with server. This assumes that the GPRS is already
+ * activated and the server is listening on the correct port.
+ */
+int gsm_tcp_connect(const char* ip, int port) {
+
+    char itoa_bfr[8];
+    itoa(itoa_bfr, port, 10);
+    char msg[100];
+
+    strcpy(msg, "AT+QIOPEN=\"TCP\",\"");
+    strcat(msg, ip);
+    strcat(msg, "\",");
+    strcat(msg, itoa_bfr);
+    strcat(msg, "\r");
+
+    if (gsm_send_command(msg, GSM_OK, 5*GSM_TIMEOUT))
+        return -1;
+    return 0;
 }
 
 // Closes the tcp connection and deactivates gprs.
