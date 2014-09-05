@@ -3,11 +3,9 @@
 #include "comm.h"
 #include "gsm.h"
 #include "rfid.h"
+#include "picsetup.h"
 
-#define MAX_NO_TAGS 20
-#define MAX_TAG_LEN 150
-#define MAX_MSG_LEN 50
-#define BOOT_WAIT 5
+
 
 #define NXT_INDX(i,mx) ((i+1) % mx)
 
@@ -67,22 +65,35 @@ void rfid_write_bfr(char c) {
     tag_data[tag_head][s_indx] = c;
 
     // Check if the message is complete.
-    if (c == 'T') {
-        //tag_data[tag_head][NXT_INDX(s_indx, MAX_TAG_LEN)] = '\0';
+    if (c == '1') {
+        tag_data[tag_head][s_indx] = '\0';
         tag_head = NXT_INDX(tag_head, MAX_NO_TAGS);
-        //s_indx = 0;
+        s_indx = 0;
     }
 
-    //else
-    //    s_indx = NXT_INDX(s_indx, MAX_TAG_LEN);
+    else {
+        s_indx = NXT_INDX(s_indx, MAX_TAG_LEN);
+    }
 
 }
 
+/* Reads a single message out of the buffer, posting it to the server. */
 void rfid_read_bfr(void) {
     if (rfid_tag_ready()) {
-        //gsm_http_post(tag_data[tag_tail]);
-        gsm_http_post("Hello\n");
-        tag_tail = NXT_INDX(tag_tail, MAX_NO_TAGS);
+
+        RFID_LED = 0;
+        delay_ms(500);
+        RFID_LED = 1;
+
+        // Only move our place in the list if the POST succeeded.
+        if (gsm_http_post(tag_data[tag_tail])) {
+            //TODO: fix this to handle failed post command.
+            GSM_LED = 0;
+        }
+        else {
+            tag_tail = NXT_INDX(tag_tail, MAX_NO_TAGS);
+    
+        }
     }
 }
 

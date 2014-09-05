@@ -15,7 +15,7 @@ unsigned int gsm_tcp_lost=0;
 const char IP[] = "http://traclock.no-ip.biz";
 const char APN[] = "ATT.MVNO";
 int PORT = 8000;
-const char post_domain_name[] = "http://traclock.no-ip.biz:8000/update/";
+const char post_domain_name[] = "http://traclock.no-ip.biz:8000/updates/";
 
 /* Get index of nth previous char in buffer, accounting for wraparound. */
 int buffer_indx_prev(int n) {
@@ -34,21 +34,23 @@ void gsm_update_state(char data) {
     if (gsm_buffer_indx == GSM_BUFFER_LEN)
         gsm_buffer_indx = -1;
     gsm_response_buffer[gsm_buffer_indx] = data;
-
-    // Check for change in state.
-    if ((gsm_response_buffer[gsm_buffer_indx]   ==  10) &&
-        (gsm_response_buffer[buffer_indx_prev(1)] ==  13) &&
-        (gsm_response_buffer[buffer_indx_prev(2)] == 'K') &&
-        (gsm_response_buffer[buffer_indx_prev(3)] == 'O')) {
+    
+    // Check for changes in state.
+    // For the most part, the module will return "OK" followed by line return
+    // and new line. However, the http post function does not give the return/
+    // new line. Therefore we explicitly only check for the two characters "OK".
+    if ((gsm_response_buffer[gsm_buffer_indx]     ==  'K') &&
+        (gsm_response_buffer[buffer_indx_prev(1)] ==  'O')) {
         response_rcvd = 1;
         gsm_state = GSM_OK;
     }
+
     else if ((gsm_response_buffer[gsm_buffer_indx] == '>')) {
         response_rcvd = 1;
         gsm_state = GSM_READY;
     }
 
-    else if ((gsm_response_buffer[gsm_buffer_indx] == 'T') &&
+    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'T') &&
              (gsm_response_buffer[buffer_indx_prev(1)] == 'C') &&
              (gsm_response_buffer[buffer_indx_prev(2)] == 'E') &&
              (gsm_response_buffer[buffer_indx_prev(3)] == 'N') &&
@@ -59,7 +61,16 @@ void gsm_update_state(char data) {
         gsm_state = GSM_CONNECT;
     }
 
-    else if ((gsm_response_buffer[gsm_buffer_indx] == 'D') &&
+    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'R') &&
+             (gsm_response_buffer[buffer_indx_prev(1)] == 'O') &&
+             (gsm_response_buffer[buffer_indx_prev(2)] == 'R') &&
+             (gsm_response_buffer[buffer_indx_prev(3)] == 'R') &&
+             (gsm_response_buffer[buffer_indx_prev(4)] == 'E')) {
+        response_rcvd = 1;
+        gsm_state = GSM_ERROR;
+    }
+
+    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'D') &&
              (gsm_response_buffer[buffer_indx_prev(1)] == 'E') &&
              (gsm_response_buffer[buffer_indx_prev(2)] == 'S') &&
              (gsm_response_buffer[buffer_indx_prev(3)] == 'O') &&
@@ -69,14 +80,6 @@ void gsm_update_state(char data) {
         gsm_state = GSM_CLOSED;
         if (gsm_data_mode)
             gsm_tcp_lost = 1;
-    }
-
-    else if ((gsm_response_buffer[gsm_buffer_indx] == 'N') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == 'W') &&
-             (gsm_response_buffer[buffer_indx_prev(2)] == 'O') &&
-             (gsm_response_buffer[buffer_indx_prev(3)] == 'D')) {
-        response_rcvd = 1;
-        gsm_state = GSM_PWR_DOWN;
     }
 
 }
@@ -159,10 +162,17 @@ int gsm_init(void) {
 /* Wait for the GSM to give response. Timeout if not received. */
 int gsm_wait_for_response(GSMResponse resp, unsigned timeout) {
 
+    GSMResponse r;
+
     WriteCoreTimer(0);
     while (1) {
-        if (gsm_get_state() == resp)
+        r = gsm_get_state();
+
+        if (r == resp)
             return 0;
+
+        else if (r == GSM_ERROR)
+            return -2;
 
         if (ReadCoreTimer() > timeout*20000)
             return -1;
@@ -210,12 +220,19 @@ int gsm_gprs_init(void) {
 
 }
 
+/* Deactivate the GPRS. */
+int gsm_grps_deact(void) {
+
+    return gsm_send_command("AT+QIDEACT\r", GSM_OK, 3*GSM_TIMEOUT);
+    
+}
+
 /* Sets the HTTP url to send data to. */
 int gsm_set_http_url(void) {
 
     int len = strlen(post_domain_name);
     char msg[100];
-    sprintf(msg, "AT+QHTTPURL=%i,15\r", len);
+    sprintf(msg, "AT+QHTTPURL=%i,%i\r", len, GSM_TIMEOUT/1000);
 
     if (gsm_send_command(msg, GSM_CONNECT, 5*GSM_TIMEOUT))
         return -1;
@@ -234,14 +251,21 @@ int gsm_http_post(char* data) {
         return -1;
     
     char msg[100];
-    sprintf(msg, "AT+QHTTPPOST=%i,5,1\r", len);
+    // Note that the timeout for the message send needs to be less than or equal
+    // to the amount of time we are waiting for a response. If it is longer, the
+    // GSM will be stuck waiting for data even after the function has returned.
+    // We do not care about the read time for right now.
+    sprintf(msg, "AT+QHTTPPOST=%i,%i,5\r", len, GSM_TIMEOUT/1000);
 
     if (gsm_send_command(msg, GSM_CONNECT, GSM_TIMEOUT))
         return -1;
-    delay_ms(25); // This pause is really important!
+    delay_ms(100); // This pause is really important!
 
-    write_string(GSM_UART, data);
-    return gsm_wait_for_response(GSM_OK, GSM_TIMEOUT/100);
+    int j;
+    for (j=0; j<len; j++)
+        put_character(GSM_UART, data[j]);
+
+    return gsm_wait_for_response(GSM_OK, GSM_TIMEOUT);
 
 }
 
@@ -281,11 +305,6 @@ int gsm_tcp_close(void) {
     if (gsm_send_command("AT+QICLOSE\r", GSM_OK, GSM_TIMEOUT))
         return -1;
 
-    // Deactivate gprs.
-    //if (gsm_send_command("AT+QIDEACT\r", GSM_OK, GSM_TIMEOUT))
-    //    return -1;
-    //return 0;
-
 }
 
 /* Writes a message over tcp. */
@@ -314,7 +333,7 @@ unsigned gsm_chk_tcp_conn(void) {
 }
 
 /* Resets the tcp connection after a failure. */
-int gsm_tcp_reset(void) {
+/*int gsm_tcp_reset(void) {
 
     // Assume the abnormaility was caught by the "closed" command,
     // then the gsm is already in command mode.
@@ -339,7 +358,7 @@ int gsm_tcp_reset(void) {
     gsm_data_mode = 1;
     return 0;
 
-}
+}*/
 
 // The following is no longer in use, but kept for reference.
 //Deprecated.

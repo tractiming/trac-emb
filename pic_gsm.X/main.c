@@ -53,13 +53,25 @@ int main(void) {
         GSM_LED=0;
     if (!gsm_gprs_init())
         GSM_LED=0;
+    GSM_LED = 1;
+
+    //if (!gsm_tcp_connect("http://traclock.no-ip.biz/updates/", 8000))
+    //    GSM_LED = 1;
+    //else
+    //    RFID_LED = 1;
     //if (!gsm_http_post_raw("Hello"))
     //    RFID_LED=1;
-    if (!gsm_set_http_url())
-        GSM_LED=1;
+    if (gsm_set_http_url())
+        GSM_LED=0;
     //if (gsm_http_post("Hello you\r\n"))
-        //RFID_LED=0;
-    gsm_http_post("m=Hello");
+    //    RFID_LED=1;
+
+    //gsm_http_post("m=Hello");
+    //if (gsm_http_post("m=Hello you!\n\n"))
+    //    GSM_LED = 0;
+
+    //rfid_init();
+    //RFID_LED = 1;
     //if (!gsm_http_post("Hello world"))
     //    RFID_LED=0;
 
@@ -83,18 +95,25 @@ int main(void) {
     
     //delay_ms(3000);
     while (1) {
-        gsm_http_post("m=Testing");
+        //gsm_http_post("m=Testing");
+        //delay_ms(1000);
+        //if (!PORTBbits.RB14)
+        //{
+        //    rfid_write_bfr('H');
+        //    rfid_write_bfr('\n');
+        //    //if (gsm_http_post("m=Test"))
+        //    //{
+        //        //gsm_send_command("AT+QIDEACT\r", GSM_OK, 10*GSM_TIMEOUT);
+        //    //    delay_ms(100);
+        //        //gsm_send_command("AT+QIACT\r", GSM_OK, 10*GSM_TIMEOUT);
+        //    //}
+        //    delay_ms(1000);
+        //}
+        rfid_write_bfr('H');
+        rfid_write_bfr('\n');
         delay_ms(1000);
-        if (!PORTBbits.RB14)
-        {
-            if (gsm_http_post("m=Test"))
-            {
-                //gsm_send_command("AT+QIDEACT\r", GSM_OK, 10*GSM_TIMEOUT);
-                delay_ms(100);
-                //gsm_send_command("AT+QIACT\r", GSM_OK, 10*GSM_TIMEOUT);
-            }
-            delay_ms(50);
-        }
+        rfid_read_bfr();
+        delay_ms(8000);
 
 
         // Check to make sure the connection is being maintained.
@@ -178,7 +197,7 @@ void __ISR(RFID_UART_VEC, IPL7SOFT) IntRFIDUartHandler(void) {
   if (INTGetFlag(INT_SOURCE_UART_RX(RFID_UART))) {
 
     char data = UARTGetDataByte(RFID_UART);
-    rfid_write_bfr(data);
+    //rfid_write_bfr(data);
 
     // Clear the RX interrupt flag.
     INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));

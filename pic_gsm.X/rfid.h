@@ -8,12 +8,16 @@
 #ifndef RFID_H
 #define	RFID_H
 
-#define MAX_TAG_MSG_LEN 50
+#define MAX_NO_TAGS 20
+#define MAX_TAG_LEN 150
+#define MAX_MSG_LEN 50
+#define BOOT_WAIT 5
 #define RFID_TIMEOUT 10000
 
 typedef struct {
-    char tag_str[MAX_TAG_MSG_LEN];
-    int str_indx;
+    char tag_str[MAX_TAG_LEN];
+    char date_str[MAX_TAG_LEN];
+    char ant_str[1];
 } TagData;
 
 int rfid_init(void);

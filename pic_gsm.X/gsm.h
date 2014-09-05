@@ -15,6 +15,7 @@ typedef enum {
     GSM_CONNECT = 4,
     GSM_CLOSED = 5,
     GSM_PWR_DOWN = 6,
+    GSM_CME = 7,
 } GSMResponse;
 
 void delay_ms(unsigned int);
@@ -30,8 +31,11 @@ unsigned gsm_get_data_mode(void);
 unsigned gsm_chk_tcp_conn(void);
 int gsm_tcp_reset(void);
 int gsm_gprs_init(void);
+int gsm_gprs_deact(void);
 int gsm_set_http_url(void);
 int gsm_http_post(char*);
+
+extern const char post_domain_name[];
 
 #endif	/* GSM_H */
 
