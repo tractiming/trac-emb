@@ -5,104 +5,81 @@
 #include "gsm.h"
 #include "comm.h"
 
-int gsm_buffer_indx = 0;
-char gsm_response_buffer[GSM_BUFFER_LEN];
-GSMResponse gsm_state;
-int response_rcvd = 0;
-unsigned int gsm_data_mode=0;
-unsigned int gsm_tcp_lost=0;
-
-const char IP[] = "http://traclock.no-ip.biz";
-const char APN[] = "ATT.MVNO";
-int PORT = 8000;
+GsmState gsm_state;
+const char apn[] = "ATT.MVNO";
 const char post_domain_name[] = "http://traclock.no-ip.biz:8000/updates/";
 
-/* Get index of nth previous char in buffer, accounting for wraparound. */
-int buffer_indx_prev(int n) {
-    int i = gsm_buffer_indx - n;
-    if (i >= 0)
-        return i;
+void gsm_clear_buffer(GsmState *s)
+{
+    s->indx = 0;
+    memset(s->buf, 0, GSM_BUFFER_LEN*sizeof(char));
+    //s->buf[0] = '\0';
+}
+
+void gsm_add_to_buffer(GsmState *s, char c)
+{
+    s->buf[s->indx] = c;
+    s->indx = NEXT_GSM_INDX(s->indx);
+}
+
+int compare_response(GsmState *s, const char *str)
+{
+    /* Note: here we do separate checks for the token in the wrapped and 
+     * unwrapped versions of the buffer. 
+     */
+
+    // Check if word exists unwraped in buffer.
+    char *chk1 = strstr(s->buf, str);
+    if (chk1)
+        return 1;
+
+    // If not, the word might be wrapped around the end.
     else
-        return GSM_BUFFER_LEN+i;
+    {
+        char unwrap[2*GSM_BUFFER_LEN];
+        strcpy(unwrap, s->buf);
+        strcat(unwrap, s->buf);
+        char *chk2 = strstr(unwrap, str);
+        if (chk2)
+            return 1;
+    }
+    
+    return 0;
 }
 
 /* Update the state of the gsm module. */
-void gsm_update_state(char data) {
+void gsm_update_state(GsmState *s)
+{
+    /* For the most part, the module will return "OK" followed by line return
+     * and new line. However, the http post function does not give the return/
+     * new line. Therefore we explicitly only check for the two characters "OK".
+     */
+    if (compare_response(s, "OK"))
+        s->resp = GSM_OK;
 
-    // Add byte to buffer
-    gsm_buffer_indx++;
-    if (gsm_buffer_indx == GSM_BUFFER_LEN)
-        gsm_buffer_indx = -1;
-    gsm_response_buffer[gsm_buffer_indx] = data;
-    
-    // Check for changes in state.
-    // For the most part, the module will return "OK" followed by line return
-    // and new line. However, the http post function does not give the return/
-    // new line. Therefore we explicitly only check for the two characters "OK".
-    if ((gsm_response_buffer[gsm_buffer_indx]     ==  'K') &&
-        (gsm_response_buffer[buffer_indx_prev(1)] ==  'O')) {
-        response_rcvd = 1;
-        gsm_state = GSM_OK;
-    }
+    else if (compare_response(s, "CONNECT"))
+        s->resp = GSM_CONNECT;
 
-    else if ((gsm_response_buffer[gsm_buffer_indx] == '>')) {
-        response_rcvd = 1;
-        gsm_state = GSM_READY;
-    }
+    else if (compare_response(s, "ERROR"))
+        s->resp = GSM_ERROR;
 
-    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'T') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == 'C') &&
-             (gsm_response_buffer[buffer_indx_prev(2)] == 'E') &&
-             (gsm_response_buffer[buffer_indx_prev(3)] == 'N') &&
-             (gsm_response_buffer[buffer_indx_prev(4)] == 'N') &&
-             (gsm_response_buffer[buffer_indx_prev(5)] == 'O') &&
-             (gsm_response_buffer[buffer_indx_prev(6)] == 'C')) {
-        response_rcvd = 1;
-        gsm_state = GSM_CONNECT;
-    }
-
-    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'R') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == 'O') &&
-             (gsm_response_buffer[buffer_indx_prev(2)] == 'R') &&
-             (gsm_response_buffer[buffer_indx_prev(3)] == 'R') &&
-             (gsm_response_buffer[buffer_indx_prev(4)] == 'E')) {
-        response_rcvd = 1;
-        gsm_state = GSM_ERROR;
-    }
-
-    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'D') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == 'E') &&
-             (gsm_response_buffer[buffer_indx_prev(2)] == 'S') &&
-             (gsm_response_buffer[buffer_indx_prev(3)] == 'O') &&
-             (gsm_response_buffer[buffer_indx_prev(4)] == 'L') &&
-             (gsm_response_buffer[buffer_indx_prev(5)] == 'C')) {
-        response_rcvd = 1;
-        gsm_state = GSM_CLOSED;
-        if (gsm_data_mode)
-            gsm_tcp_lost = 1;
-    }
+    else if (compare_response(s, "CLOSED"))
+        s->resp = GSM_CLOSED;
 
 }
 
-/* Returns the state of the gsm module. */
-GSMResponse gsm_get_state(void) {
-    if (response_rcvd) {
-        response_rcvd = 0;
-        return gsm_state;
-    }
-    else
-        return GSM_NONE;
-}
 
 /* Delay for a given number of msecs. */
-void delay_ms(unsigned int msec) {
+void delay_ms(unsigned int msec)
+{
     unsigned int delay = (SYS_FREQ/2000)*msec;
     WriteCoreTimer(0);
     while (ReadCoreTimer()<delay);
 }
 
 /* Turn on the gsm by toggling power pin. */
-void gsm_pwr_on(void) {
+void gsm_pwr_on(void)
+{
     // To turn on, we pull power pin low, wait 2.5 sec and then pull high.
     POWERKEY = 0;
     delay_ms(2500);
@@ -113,138 +90,127 @@ void gsm_pwr_on(void) {
 //FIXME!
 /* Turn off the gsm by toggling power pin.
    NOTE: The GSM2 click does not provide a pin for EMERG_OFF. */
-void gsm_pwr_off(void) {
+//void gsm_pwr_off(void) {
     // Pull power key to low. Safe to shut off after 12s.
-    gsm_send_command("AT+QPOWD=1\r", GSM_PWR_DOWN, GSM_TIMEOUT);
+//    gsm_send_command("AT+QPOWD=1\r", GSM_PWR_DOWN, GSM_TIMEOUT);
     //POWERKEY = 0;
     //delay_ms(750);
     //POWERKEY = 1;
     //delay_ms(12000);
-}
+//}
 
 /* Checks if sim card is present. */
-int gsm_chk_sim(void) {
-    
-    if (gsm_send_command("AT+CPIN?\r", GSM_OK, GSM_TIMEOUT))
-        return -1;
+//int gsm_chk_sim(void) {
+//
+//    if (gsm_send_command("AT+CPIN?\r", GSM_OK, GSM_TIMEOUT))
+//        return -1;
+//
+//    return 0;
+//}
 
-    return 0;
-}
 
-/* Initialize GSM module. */
-int gsm_init(void) {
-
-    // Reset buffer and state.
-    gsm_buffer_indx = 0;
-    gsm_data_mode = 0;
-    gsm_tcp_lost = 0;
-    gsm_state = GSM_NONE;
-
-    // Pull powerkey low to turn on module.
-    gsm_pwr_on();
-  
-    // Send "AT" command to sync baudrates.
-    WriteCoreTimer(0);
-    while (gsm_get_state() != GSM_OK) {
-        write_string(GSM_UART, "AT\r");
-        delay_ms(100);
-        
-        // If no response, return failure.
-        if (ReadCoreTimer() > 40000*GSM_TIMEOUT)
-            return -1;
-    }
-    delay_ms(5000);
-
-    return 0;
-
-}
 
 /* Wait for the GSM to give response. Timeout if not received. */
-int gsm_wait_for_response(GSMResponse resp, unsigned timeout) {
-
-    GSMResponse r;
+int gsm_wait_for_response(GsmState *s, GsmResponse resp, unsigned timeout)
+{
+    s->resp = GSM_NONE;
 
     WriteCoreTimer(0);
-    while (1) {
-        r = gsm_get_state();
+    while (1)
+    {
+        gsm_update_state(s);
 
-        if (r == resp)
+        if (s->resp == resp)
             return 0;
 
-        else if (r == GSM_ERROR)
-            return -2;
+        else if (s->resp == GSM_ERROR)
+            return -1;
 
         if (ReadCoreTimer() > timeout*20000)
-            return -1;
+            return -2;
     }
 
 }
 
 /* Send command to GSM and wait for response or timeout. */
-int gsm_send_command(char *command, GSMResponse response, unsigned timeout) {
-
+int gsm_send_command(GsmState *s, GsmResponse response,
+                     char *command, unsigned timeout)
+{
+    gsm_clear_buffer(s);
     write_string(GSM_UART, command);
-    return gsm_wait_for_response(response, timeout);
-
+    return gsm_wait_for_response(s, response, timeout);
 }
 
 /* Brings up connection with the GPRS network. */
-int gsm_gprs_init(void) {
+int gsm_gprs_init(GsmState *s, const char *apn) {
 
     int delay_time = 100;
+    char msg[100];
 
     // Set the context 0 as FGCNT.
-    if (gsm_send_command("AT+QIFGCNT=0\r", GSM_OK, GSM_TIMEOUT))
+    if (gsm_send_command(s, GSM_OK, "AT+QIFGCNT=0\r", GSM_TIMEOUT))
         return -1;
     delay_ms(delay_time);
 
     // Set APN.
-    if (gsm_send_command("AT+QICSGP=1,\"ATT.MVNO\"\r", GSM_OK, GSM_TIMEOUT))
+    strcpy(msg, "AT+QICSGP=1,\"");
+    strcat(msg, apn);
+    strcat(msg, "\"\r");
+    if (gsm_send_command(s, GSM_OK, "AT+QICSGP=1,\"ATT.MVNO\"\r", GSM_TIMEOUT))
         return -1;
     delay_ms(delay_time);
 
     // Register the TCP/IP stack.
-    if (gsm_send_command("AT+QIREGAPP\r", GSM_OK, 3*GSM_TIMEOUT))
+    if (gsm_send_command(s, GSM_OK, "AT+QIREGAPP\r", 3*GSM_TIMEOUT))
         return -1;
 
-    // The following pause is essential. We need to give the module some time
-    // after registering the network and before asking for a gprs connection.
-    delay_ms(2000);
+    /* The following pause is essential. We need to give the module some time
+     * after registering the network and before asking for a gprs connection.
+     * (3 sec does not seem to work, but 5 does.)
+     */
+    delay_ms(5000);
 
     // Activate FGCNT. Brings up the wireless connection.
-    if (gsm_send_command("AT+QIACT\r", GSM_OK, 18*GSM_TIMEOUT))
+    if (gsm_send_command(s, GSM_OK, "AT+QIACT\r", 18*GSM_TIMEOUT))
         return -1;
     delay_ms(delay_time);
 
     return 0;
-
 }
 
 /* Deactivate the GPRS. */
-int gsm_grps_deact(void) {
-
-    return gsm_send_command("AT+QIDEACT\r", GSM_OK, 3*GSM_TIMEOUT);
-    
+int gsm_grps_deact(GsmState *s)
+{
+    return gsm_send_command(s, GSM_OK, "AT+QIDEACT\r", 3*GSM_TIMEOUT);
 }
 
 /* Sets the HTTP url to send data to. */
-int gsm_set_http_url(void) {
+int gsm_set_http_url(GsmState *s, const char *url) {
 
-    int len = strlen(post_domain_name);
+    int len = strlen(url);
     char msg[100];
-    sprintf(msg, "AT+QHTTPURL=%i,%i\r", len, GSM_TIMEOUT/1000);
+    sprintf(msg, "AT+QHTTPURL=%i,%i\r", len, 15);
 
-    if (gsm_send_command(msg, GSM_CONNECT, 5*GSM_TIMEOUT))
+
+    int err = gsm_send_command(s, GSM_CONNECT, msg, 5*GSM_TIMEOUT);
+    if (err == -1)
+    {
+        GSM_LED = 1;
+        delay_ms(250);
+        GSM_LED = 0;
+        return -1;
+    }
+    if (gsm_send_command(s, GSM_CONNECT, msg, 5*GSM_TIMEOUT))
         return -1;
     delay_ms(100);
 
-    write_string(GSM_UART, post_domain_name);
-    return gsm_wait_for_response(GSM_OK, GSM_TIMEOUT);
+    write_string(GSM_UART, (char *) url);
+    return gsm_wait_for_response(s, GSM_OK, GSM_TIMEOUT);
 
 }
 
 /* Sends an HTTP POST request to the server. This assumes the http url is set.*/
-int gsm_http_post(char* data) {
+int gsm_http_post(GsmState *s, char* data) {
 
     int len = strlen(data);
     if (len > GSM_MAX_HTTP_LEN)
@@ -257,7 +223,7 @@ int gsm_http_post(char* data) {
     // We do not care about the read time for right now.
     sprintf(msg, "AT+QHTTPPOST=%i,%i,5\r", len, GSM_TIMEOUT/1000);
 
-    if (gsm_send_command(msg, GSM_CONNECT, GSM_TIMEOUT))
+    if (gsm_send_command(s, GSM_CONNECT, msg, GSM_TIMEOUT))
         return -1;
     delay_ms(100); // This pause is really important!
 
@@ -265,14 +231,14 @@ int gsm_http_post(char* data) {
     for (j=0; j<len; j++)
         put_character(GSM_UART, data[j]);
 
-    return gsm_wait_for_response(GSM_OK, GSM_TIMEOUT);
+    return gsm_wait_for_response(s, GSM_OK, GSM_TIMEOUT);
 
 }
 
 /* Establish TCP connection with server. This assumes that the GPRS is already
  * activated and the server is listening on the correct port.
  */
-int gsm_tcp_connect(const char* ip, int port) {
+int gsm_tcp_connect(GsmState *s, const char* ip, int port) {
 
     char itoa_bfr[8];
     itoa(itoa_bfr, port, 10);
@@ -284,13 +250,52 @@ int gsm_tcp_connect(const char* ip, int port) {
     strcat(msg, itoa_bfr);
     strcat(msg, "\r");
 
-    if (gsm_send_command(msg, GSM_OK, 5*GSM_TIMEOUT))
+    if (gsm_send_command(s, GSM_OK, msg, 5*GSM_TIMEOUT))
         return -1;
     return 0;
 }
 
+/* Initialize GSM module. */
+int gsm_init(GsmState *s)
+{
+    // Pull powerkey low to turn on module.
+    gsm_pwr_on();
+
+    // Reset buffer and state.
+    gsm_clear_buffer(s);
+    s->resp = GSM_NONE;
+
+    // Send "AT" command to sync baudrates.
+    WriteCoreTimer(0);
+    while (s->resp != GSM_OK)
+    {
+        write_string(GSM_UART, "AT\r");
+        delay_ms(100);
+        gsm_update_state(s);
+
+        // If no response, return failure.
+        if (ReadCoreTimer() > 40000*GSM_TIMEOUT/1000*1000)
+            return -1;
+    }
+    delay_ms(1500);
+
+    // Connect to the GPRS network.
+    if (gsm_gprs_init(s, apn))
+        return -2;
+    delay_ms(1000);
+
+    // Set the url for http posts.
+    //if (gsm_set_http_url(s, post_domain_name))
+    //    return -3;
+    //delay_ms(1000);
+
+    return 0;
+}
+
+
+
 // Closes the tcp connection and deactivates gprs.
-int gsm_tcp_close(void) {
+/*int gsm_tcp_close(void) {
 
     // Switch back to AT command mode.
     if (gsm_data_mode) {
@@ -305,10 +310,10 @@ int gsm_tcp_close(void) {
     if (gsm_send_command("AT+QICLOSE\r", GSM_OK, GSM_TIMEOUT))
         return -1;
 
-}
+}*/
 
 /* Writes a message over tcp. */
-int gsm_tcp_send_data(char *data) {
+/*int gsm_tcp_send_data(char *data) {
 
     // If we are not in data mode, we cannot write the message directly.
     if (gsm_data_mode != 1)
@@ -320,17 +325,17 @@ int gsm_tcp_send_data(char *data) {
     
     return 0;
     
-}
+}*/
 
 /* Returns whether the gsm is in data or text mode. */
-unsigned gsm_get_data_mode(void) {
-    return gsm_data_mode;
-}
+//unsigned gsm_get_data_mode(void) {
+//    return gsm_data_mode;
+//}
 
 /* Returns 1 if the connection has been lost. */
-unsigned gsm_chk_tcp_conn(void) {
-    return gsm_tcp_lost;
-}
+//unsigned gsm_chk_tcp_conn(void) {
+//    return gsm_tcp_lost;
+//}
 
 /* Resets the tcp connection after a failure. */
 /*int gsm_tcp_reset(void) {
@@ -442,3 +447,80 @@ int gsm_tcp_connect(void) {
 
 }
 */
+/* Update the state of the gsm module. */
+/*void gsm_update_state_old(GsmState *s, char data) {
+
+    // Add byte to buffer
+    s->indx++;
+    if (s->indx == GSM_BUFFER_LEN)
+        s->indx = -1;
+    gsm_response_buffer[gsm_buffer_indx] = data;
+
+    // Check for changes in state.
+    // For the most part, the module will return "OK" followed by line return
+    // and new line. However, the http post function does not give the return/
+    // new line. Therefore we explicitly only check for the two characters "OK".
+    if ((gsm_response_buffer[gsm_buffer_indx]     ==  'K') &&
+        (gsm_response_buffer[buffer_indx_prev(1)] ==  'O')) {
+        response_rcvd = 1;
+        gsm_state = GSM_OK;
+    }
+
+    else if ((gsm_response_buffer[gsm_buffer_indx] == '>')) {
+        response_rcvd = 1;
+        gsm_state = GSM_READY;
+    }
+
+    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'T') &&
+             (gsm_response_buffer[buffer_indx_prev(1)] == 'C') &&
+             (gsm_response_buffer[buffer_indx_prev(2)] == 'E') &&
+             (gsm_response_buffer[buffer_indx_prev(3)] == 'N') &&
+             (gsm_response_buffer[buffer_indx_prev(4)] == 'N') &&
+             (gsm_response_buffer[buffer_indx_prev(5)] == 'O') &&
+             (gsm_response_buffer[buffer_indx_prev(6)] == 'C')) {
+        response_rcvd = 1;
+        gsm_state = GSM_CONNECT;
+    }
+
+    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'R') &&
+             (gsm_response_buffer[buffer_indx_prev(1)] == 'O') &&
+             (gsm_response_buffer[buffer_indx_prev(2)] == 'R') &&
+             (gsm_response_buffer[buffer_indx_prev(3)] == 'R') &&
+             (gsm_response_buffer[buffer_indx_prev(4)] == 'E')) {
+        response_rcvd = 1;
+        gsm_state = GSM_ERROR;
+    }
+
+    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'D') &&
+             (gsm_response_buffer[buffer_indx_prev(1)] == 'E') &&
+             (gsm_response_buffer[buffer_indx_prev(2)] == 'S') &&
+             (gsm_response_buffer[buffer_indx_prev(3)] == 'O') &&
+             (gsm_response_buffer[buffer_indx_prev(4)] == 'L') &&
+             (gsm_response_buffer[buffer_indx_prev(5)] == 'C')) {
+        response_rcvd = 1;
+        gsm_state = GSM_CLOSED;
+        if (gsm_data_mode)
+            gsm_tcp_lost = 1;
+    }
+
+}*/
+
+/* Returns the state of the gsm module. */
+/*GSMResponse gsm_get_state(void) {
+    if (response_rcvd) {
+        response_rcvd = 0;
+        return gsm_state;
+    }
+    else
+        return GSM_NONE;
+}
+*/
+
+/* Get index of nth previous char in buffer, accounting for wraparound. */
+/*int prev_indx(GsmState *s, int n) {
+    int i = s->indx - n;
+    if (i >= 0)
+        return i;
+    else
+        return GSM_BUFFER_LEN+i;
+}*/

@@ -21,6 +21,7 @@
       <itemPath>gsm.c</itemPath>
       <itemPath>comm.c</itemPath>
       <itemPath>rfid.c</itemPath>
+      <itemPath>strtok_r.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

@@ -1,31 +1,45 @@
-/* 
- * File:   rfid.h
- * Author: elliot
- *
- * Created on April 10, 2014, 10:19 PM
- */
-
 #ifndef RFID_H
-#define	RFID_H
+#define RFID_H
 
-#define MAX_NO_TAGS 20
-#define MAX_TAG_LEN 150
-#define MAX_MSG_LEN 50
+#define NUM_SPLITS 25
+#define NEXT_SPLIT_INDX(i) ((i+1) % NUM_SPLITS)
+#define BUF_LEN1 20
+#define BUF_LEN2 100
+#define NEXT_BUF1_INDX(i) ((i+1) % BUF_LEN1)
+#define NEXT_BUF2_INDX(i) ((i+1) % BUF_LEN2)
+#define MAX_MSG_LEN 100
 #define BOOT_WAIT 5
-#define RFID_TIMEOUT 10000
 
-typedef struct {
-    char tag_str[MAX_TAG_LEN];
-    char date_str[MAX_TAG_LEN];
-    char ant_str[1];
-} TagData;
+typedef struct
+{
+    char tag_id[40];
+    char time[30];
+    char ant[2];   
+} Split;
 
-int rfid_init(void);
-void rfid_clear_tags(void);
-int rfid_tag_ready(void);
-void rfid_write_bfr(char c);
-void rfid_read_bfr(void);
+typedef struct 
+{
+    Split queue[NUM_SPLITS];
+    int head;
+    int tail;
+} SplitQueue;
 
+typedef struct
+{
+    char buf[BUF_LEN1][BUF_LEN2];
+    int head;
+    int tail;
+    int indx;
+
+} LineBuffer;
+
+extern SplitQueue rfid_split_queue;
+extern LineBuffer rfid_line_buffer;
+
+void get_split_msg(Split *, char *);
+void add_char_to_buffer(LineBuffer *, char);
+void update_splits(SplitQueue *, LineBuffer *);
+void post_splits_to_server(SplitQueue *, const char*);
+void rfid_init(void);
 
 #endif	/* RFID_H */
-

@@ -5,8 +5,10 @@
 #define GSM_TIMEOUT 10000
 #define GSM_RETRY_ATT 2
 #define GSM_MAX_HTTP_LEN 100
+#define NEXT_GSM_INDX(i) ((i+1) % GSM_BUFFER_LEN)
 
-typedef enum {
+typedef enum
+{
     GSM_NONE = -1,
     GSM_OK = 0,
     GSM_READY = 1,
@@ -16,10 +18,29 @@ typedef enum {
     GSM_CLOSED = 5,
     GSM_PWR_DOWN = 6,
     GSM_CME = 7,
-} GSMResponse;
+} GsmResponse;
+
+typedef struct
+{
+    char buf[GSM_BUFFER_LEN];
+    int indx;
+    GsmResponse resp;
+    int resp_rcvd;
+    int data_mode;
+} GsmState;
+
+extern const char apn[];
+extern const char post_domain_name[];
+extern GsmState gsm_state;
 
 void delay_ms(unsigned int);
-void gsm_update_state(char);
+void gsm_add_to_buffer(GsmState *, char);
+int gsm_send_command(GsmState *, GsmResponse, char *, unsigned);
+int gsm_init(GsmState *);
+
+
+
+/*void gsm_update_state(char);
 void gsm_pwr_on(void);
 void gsm_pwr_off(void);
 int gsm_init(void);
@@ -33,9 +54,9 @@ int gsm_tcp_reset(void);
 int gsm_gprs_init(void);
 int gsm_gprs_deact(void);
 int gsm_set_http_url(void);
-int gsm_http_post(char*);
+int gsm_http_post(char*);*/
 
-extern const char post_domain_name[];
+
 
 #endif	/* GSM_H */
 

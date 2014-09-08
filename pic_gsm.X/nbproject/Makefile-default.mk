@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=main.c picsetup.c gsm.c comm.c rfid.c
+SOURCEFILES_QUOTED_IF_SPACED=main.c picsetup.c gsm.c comm.c rfid.c strtok_r.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/picsetup.o ${OBJECTDIR}/gsm.o ${OBJECTDIR}/comm.o ${OBJECTDIR}/rfid.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/picsetup.o.d ${OBJECTDIR}/gsm.o.d ${OBJECTDIR}/comm.o.d ${OBJECTDIR}/rfid.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/main.o ${OBJECTDIR}/picsetup.o ${OBJECTDIR}/gsm.o ${OBJECTDIR}/comm.o ${OBJECTDIR}/rfid.o ${OBJECTDIR}/strtok_r.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/main.o.d ${OBJECTDIR}/picsetup.o.d ${OBJECTDIR}/gsm.o.d ${OBJECTDIR}/comm.o.d ${OBJECTDIR}/rfid.o.d ${OBJECTDIR}/strtok_r.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/picsetup.o ${OBJECTDIR}/gsm.o ${OBJECTDIR}/comm.o ${OBJECTDIR}/rfid.o
+OBJECTFILES=${OBJECTDIR}/main.o ${OBJECTDIR}/picsetup.o ${OBJECTDIR}/gsm.o ${OBJECTDIR}/comm.o ${OBJECTDIR}/rfid.o ${OBJECTDIR}/strtok_r.o
 
 # Source Files
-SOURCEFILES=main.c picsetup.c gsm.c comm.c rfid.c
+SOURCEFILES=main.c picsetup.c gsm.c comm.c rfid.c strtok_r.c
 
 
 CFLAGS=
@@ -121,6 +121,12 @@ ${OBJECTDIR}/rfid.o: rfid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/rfid.o 
 	@${FIXDEPS} "${OBJECTDIR}/rfid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/rfid.o.d" -o ${OBJECTDIR}/rfid.o rfid.c   
 	
+${OBJECTDIR}/strtok_r.o: strtok_r.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/strtok_r.o.d 
+	@${RM} ${OBJECTDIR}/strtok_r.o 
+	@${FIXDEPS} "${OBJECTDIR}/strtok_r.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/strtok_r.o.d" -o ${OBJECTDIR}/strtok_r.o strtok_r.c   
+	
 else
 ${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
@@ -151,6 +157,12 @@ ${OBJECTDIR}/rfid.o: rfid.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/rfid.o.d 
 	@${RM} ${OBJECTDIR}/rfid.o 
 	@${FIXDEPS} "${OBJECTDIR}/rfid.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/rfid.o.d" -o ${OBJECTDIR}/rfid.o rfid.c   
+	
+${OBJECTDIR}/strtok_r.o: strtok_r.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/strtok_r.o.d 
+	@${RM} ${OBJECTDIR}/strtok_r.o 
+	@${FIXDEPS} "${OBJECTDIR}/strtok_r.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/strtok_r.o.d" -o ${OBJECTDIR}/strtok_r.o strtok_r.c   
 	
 endif
 

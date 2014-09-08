@@ -64,7 +64,7 @@ void put_character(UART_MODULE id, char character) {
   while (!UARTTransmissionHasCompleted(id));
 };
 
-/* Read the data from UART2. */
+/* Read the data from UART. */
 void read_uart(UART_MODULE id, char * message, int max_len) {
   char data;
   int complete = 0, num_bytes = 0;
