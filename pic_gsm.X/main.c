@@ -39,7 +39,7 @@ int main(void) {
     GSM_LED = 0;
     RFID_LED = 0;
     
-    // Set up UART communication with GSM. Establish heartbeat. These are only
+    // Set up UART communication with GSM. This is only
     // setting registers on the pic, so don't worry about failure.
     gsm_init_uart();
 
@@ -49,44 +49,38 @@ int main(void) {
 
     // Initialize the GSM module.
     //RFID_LED=1;
-    if (!gsm_init(&gsm_state))
-    {
-        GSM_LED = 1;
-        //pic_reset();
-    }
-    else
-        RFID_LED = 1;
+    if (gsm_init(&gsm_state))
+        pic_reset();
+    GSM_LED = 1;
 
     // Inititialize the rfid reader.
-    //rfid_init_uart();
-    //rfid_init();
-    //RFID_LED = 1;
+    rfid_init_uart();
+    rfid_init();
+    RFID_LED = 1;
 
+    int j=0;
     while (1) {
-        //gsm_http_post("m=Testing");
-        //delay_ms(1000);
-        //if (!PORTBbits.RB14)
-        //{
-        //    rfid_write_bfr('H');
-        //    rfid_write_bfr('\n');
-        //    //if (gsm_http_post("m=Test"))
-        //    //{
-        //        //gsm_send_command("AT+QIDEACT\r", GSM_OK, 10*GSM_TIMEOUT);
-        //    //    delay_ms(100);
-        //        //gsm_send_command("AT+QIACT\r", GSM_OK, 10*GSM_TIMEOUT);
-        //    //}
-        //    delay_ms(1000);
-        //}
-        //rfid_write_bfr('H');
-        //rfid_write_bfr('\n');
-        //delay_ms(1000);
-        //rfid_read_bfr();
-        //delay_ms(8000);
+        
+        // Test writing to the tag buffer.
+        //const char test[] = "Tag:11C4 A324 2345, Last:2014/9/8 15:34:12.123, Ant:0\n";
+        //int i;
+        //for (i=0; i<strlen(test); i++)
+        //    add_char_to_buffer(&rfid_line_buffer, test[i]);
 
-
+        
         // Post any new data in the split buffer.
-        //update_splits(&rfid_split_queue, &rfid_line_buffer);
-        //post_splits_to_server(&rfid_split_queue, reader_id);
+        update_splits(&rfid_split_queue, &rfid_line_buffer);
+        post_splits_to_server(&gsm_state, &rfid_split_queue, reader_id);
+        delay_ms(100);
+        //write_string(RFID_UART, rfid_line_buffer.buf[rfid_line_buffer.head]);
+        //write_string(RFID_UART, "\n");
+
+        //gsm_http_post(&gsm_state, "0");
+        //delay_ms(1000);
+        //gsm_http_post(&gsm_state, "1");
+        //delay_ms(4000);
+        //gsm_http_post(&gsm_state, "2");
+        //return 0;
 
 
     };
@@ -123,6 +117,7 @@ void __ISR(RFID_UART_VEC, IPL7SOFT) IntRFIDUartHandler(void) {
       // Add the next character to the serial buffer.
       char data = UARTGetDataByte(RFID_UART);
       add_char_to_buffer(&rfid_line_buffer, data);
+      //put_character(RFID_UART, data);
 
       // Clear the RX interrupt flag.
       INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));

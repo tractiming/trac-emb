@@ -168,7 +168,7 @@ int gsm_gprs_init(GsmState *s, const char *apn) {
      * after registering the network and before asking for a gprs connection.
      * (3 sec does not seem to work, but 5 does.)
      */
-    delay_ms(5000);
+    delay_ms(6000);
 
     // Activate FGCNT. Brings up the wireless connection.
     if (gsm_send_command(s, GSM_OK, "AT+QIACT\r", 18*GSM_TIMEOUT))
@@ -191,22 +191,12 @@ int gsm_set_http_url(GsmState *s, const char *url) {
     char msg[100];
     sprintf(msg, "AT+QHTTPURL=%i,%i\r", len, 15);
 
-
-    int err = gsm_send_command(s, GSM_CONNECT, msg, 5*GSM_TIMEOUT);
-    if (err == -1)
-    {
-        GSM_LED = 1;
-        delay_ms(250);
-        GSM_LED = 0;
-        return -1;
-    }
     if (gsm_send_command(s, GSM_CONNECT, msg, 5*GSM_TIMEOUT))
         return -1;
     delay_ms(100);
 
     write_string(GSM_UART, (char *) url);
     return gsm_wait_for_response(s, GSM_OK, GSM_TIMEOUT);
-
 }
 
 /* Sends an HTTP POST request to the server. This assumes the http url is set.*/
@@ -285,9 +275,9 @@ int gsm_init(GsmState *s)
     delay_ms(1000);
 
     // Set the url for http posts.
-    //if (gsm_set_http_url(s, post_domain_name))
-    //    return -3;
-    //delay_ms(1000);
+    if (gsm_set_http_url(s, post_domain_name))
+        return -3;
+    delay_ms(1000);
 
     return 0;
 }

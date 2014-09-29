@@ -37,6 +37,7 @@ void delay_ms(unsigned int);
 void gsm_add_to_buffer(GsmState *, char);
 int gsm_send_command(GsmState *, GsmResponse, char *, unsigned);
 int gsm_init(GsmState *);
+int gsm_http_post(GsmState *, char*);
 
 
 
