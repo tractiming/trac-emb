@@ -90,6 +90,7 @@ void save_split(SplitQueue *q, char *m)
     // notification message.
     if (!parse_split_data(m, &(q->queue[q->head])))
         q->head = NEXT_SPLIT_INDX(q->head);
+    //q->head = NEXT_SPLIT_INDX(q->head);
 }
 
 void clear_buffer(LineBuffer *b)
@@ -140,6 +141,7 @@ void post_splits_to_server(GsmState *s, SplitQueue *q, const char *r_id)
         strcat(msg, "&r=");
         strcat(msg, r_id);
         gsm_http_post(s, msg);
+        //gsm_http_post(s, "test");
     }
 }
 

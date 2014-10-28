@@ -7,7 +7,7 @@
 
 GsmState gsm_state;
 const char apn[] = "ATT.MVNO";
-const char post_domain_name[] = "http://traclock.no-ip.biz:8000/updates/";
+const char post_domain_name[] = "http://traclock.no-ip.biz:8000/api/updates/";
 
 void gsm_clear_buffer(GsmState *s)
 {
@@ -24,6 +24,7 @@ void gsm_add_to_buffer(GsmState *s, char c)
 
 int compare_response(GsmState *s, const char *str)
 {
+    // TODO: optimize this since it is used very frequently.
     /* Note: here we do separate checks for the token in the wrapped and 
      * unwrapped versions of the buffer. 
      */
@@ -66,13 +67,18 @@ void gsm_update_state(GsmState *s)
     else if (compare_response(s, "CLOSED"))
         s->resp = GSM_CLOSED;
 
+    else if (compare_response(s, "DOWN"))
+        s->resp = GSM_PWR_DOWN;
+
 }
 
 
 /* Delay for a given number of msecs. */
-void delay_ms(unsigned int msec)
+void delay_ms(long int msec)
 {
-    unsigned int delay = (SYS_FREQ/2000)*msec;
+    // It is important that we use long ints here because the clock frequency
+    // is quite large and we want to allow for delays on the order of minutes.
+    long int delay = (SYS_FREQ/2000)*msec;
     WriteCoreTimer(0);
     while (ReadCoreTimer()<delay);
 }
@@ -87,17 +93,17 @@ void gsm_pwr_on(void)
     delay_ms(200);
 }
 
-//FIXME!
-/* Turn off the gsm by toggling power pin.
-   NOTE: The GSM2 click does not provide a pin for EMERG_OFF. */
-//void gsm_pwr_off(void) {
-    // Pull power key to low. Safe to shut off after 12s.
-//    gsm_send_command("AT+QPOWD=1\r", GSM_PWR_DOWN, GSM_TIMEOUT);
-    //POWERKEY = 0;
-    //delay_ms(750);
-    //POWERKEY = 1;
-    //delay_ms(12000);
-//}
+/* Turn off the gsm by toggling power pin. */
+// NOTE: The GSM2 click does not provide a pin for EMERG_OFF.
+int gsm_pwr_off(GsmState *s)
+{
+    // There are two options for powering down. The first is by toggling the 
+    //  powerkey, and the second is by issuing a software command. We use the 
+    // latter approach here.
+    int err = gsm_send_command(s, GSM_PWR_DOWN, "AT+QPOWD=1\r", GSM_TIMEOUT);
+    delay_ms(1000);
+    return err;
+}
 
 /* Checks if sim card is present. */
 //int gsm_chk_sim(void) {
@@ -107,8 +113,6 @@ void gsm_pwr_on(void)
 //
 //    return 0;
 //}
-
-
 
 /* Wait for the GSM to give response. Timeout if not received. */
 int gsm_wait_for_response(GsmState *s, GsmResponse resp, unsigned timeout)
@@ -161,7 +165,7 @@ int gsm_gprs_init(GsmState *s, const char *apn) {
     delay_ms(delay_time);
 
     // Register the TCP/IP stack.
-    if (gsm_send_command(s, GSM_OK, "AT+QIREGAPP\r", 3*GSM_TIMEOUT))
+    if (gsm_send_command(s, GSM_OK, "AT+QIREGAPP\r", 10*GSM_TIMEOUT))
         return -1;
 
     /* The following pause is essential. We need to give the module some time
@@ -171,7 +175,7 @@ int gsm_gprs_init(GsmState *s, const char *apn) {
     delay_ms(6000);
 
     // Activate FGCNT. Brings up the wireless connection.
-    if (gsm_send_command(s, GSM_OK, "AT+QIACT\r", 18*GSM_TIMEOUT))
+    if (gsm_send_command(s, GSM_OK, "AT+QIACT\r", 20*GSM_TIMEOUT))
         return -1;
     delay_ms(delay_time);
 
@@ -210,19 +214,17 @@ int gsm_http_post(GsmState *s, char* data) {
     // Note that the timeout for the message send needs to be less than or equal
     // to the amount of time we are waiting for a response. If it is longer, the
     // GSM will be stuck waiting for data even after the function has returned.
-    // We do not care about the read time for right now.
-    sprintf(msg, "AT+QHTTPPOST=%i,%i,5\r", len, GSM_TIMEOUT/1000);
+    // We do not care about the read time for right now. Note that the GSM
+    // timeout is given in milliseconds.
+    int latency = GSM_TIMEOUT/2;
+    sprintf(msg, "AT+QHTTPPOST=%i,%i,5\r", len, latency/1000);
 
     if (gsm_send_command(s, GSM_CONNECT, msg, GSM_TIMEOUT))
         return -1;
-    delay_ms(100); // This pause is really important!
 
-    int j;
-    for (j=0; j<len; j++)
-        put_character(GSM_UART, data[j]);
+    delay_ms(150); // This pause is really important!
 
-    return gsm_wait_for_response(s, GSM_OK, GSM_TIMEOUT);
-
+    return gsm_send_command(s, GSM_OK, data, GSM_TIMEOUT);
 }
 
 /* Establish TCP connection with server. This assumes that the GPRS is already
@@ -264,7 +266,7 @@ int gsm_init(GsmState *s)
         gsm_update_state(s);
 
         // If no response, return failure.
-        if (ReadCoreTimer() > 40000*GSM_TIMEOUT/1000*1000)
+        if (ReadCoreTimer() > 40000*2*GSM_TIMEOUT)
             return -1;
     }
     delay_ms(1500);

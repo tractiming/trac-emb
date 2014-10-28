@@ -4,7 +4,7 @@
 #define GSM_BUFFER_LEN 25
 #define GSM_TIMEOUT 10000
 #define GSM_RETRY_ATT 2
-#define GSM_MAX_HTTP_LEN 100
+#define GSM_MAX_HTTP_LEN 150
 #define NEXT_GSM_INDX(i) ((i+1) % GSM_BUFFER_LEN)
 
 typedef enum
@@ -33,11 +33,12 @@ extern const char apn[];
 extern const char post_domain_name[];
 extern GsmState gsm_state;
 
-void delay_ms(unsigned int);
+void delay_ms(long int);
 void gsm_add_to_buffer(GsmState *, char);
 int gsm_send_command(GsmState *, GsmResponse, char *, unsigned);
 int gsm_init(GsmState *);
 int gsm_http_post(GsmState *, char*);
+int gsm_pwr_off(GsmState *);
 
 
 

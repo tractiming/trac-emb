@@ -47,10 +47,13 @@ int main(void) {
     INTEnableSystemMultiVectoredInt();
     delay_ms(5000);
 
-    // Initialize the GSM module.
-    //RFID_LED=1;
+    // Initialize the GSM module. On failure, turn off module and reset.jk
     if (gsm_init(&gsm_state))
+    {
+        gsm_pwr_off(&gsm_state);
+        delay_ms(2000);
         pic_reset();
+    }
     GSM_LED = 1;
 
     // Inititialize the rfid reader.
@@ -58,7 +61,6 @@ int main(void) {
     rfid_init();
     RFID_LED = 1;
 
-    int j=0;
     while (1) {
         
         // Test writing to the tag buffer.
@@ -71,18 +73,11 @@ int main(void) {
         // Post any new data in the split buffer.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
         post_splits_to_server(&gsm_state, &rfid_split_queue, reader_id);
-        delay_ms(100);
+        delay_ms(150);
+        //gsm_http_post(&gsm_state, "Hello");
+
         //write_string(RFID_UART, rfid_line_buffer.buf[rfid_line_buffer.head]);
         //write_string(RFID_UART, "\n");
-
-        //gsm_http_post(&gsm_state, "0");
-        //delay_ms(1000);
-        //gsm_http_post(&gsm_state, "1");
-        //delay_ms(4000);
-        //gsm_http_post(&gsm_state, "2");
-        //return 0;
-
-
     };
     
     return 0;

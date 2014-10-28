@@ -10,7 +10,7 @@
 #define NEXT_BUF1_INDX(i) ((i+1) % BUF_LEN1)
 #define NEXT_BUF2_INDX(i) ((i+1) % BUF_LEN2)
 #define MAX_MSG_LEN 250
-#define BOOT_WAIT 5
+#define BOOT_WAIT 100
 
 typedef struct
 {
