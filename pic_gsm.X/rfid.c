@@ -39,7 +39,7 @@ void pop_split_from_queue(SplitQueue *q, char *dest)
     if (queue_is_empty(q))
         return;
 
-    get_split_msg(&(q->queue[q->tail]), dest);
+    //get_split_msg(&(q->queue[q->tail]), dest);
     q->tail = NEXT_SPLIT_INDX(q->tail);
 }
 
@@ -93,6 +93,11 @@ void save_split(SplitQueue *q, char *m)
     //q->head = NEXT_SPLIT_INDX(q->head);
 }
 
+void clear_split(Split *s)
+{
+    //strcpy(s->tag_id, );
+}
+
 void clear_buffer(LineBuffer *b)
 {
     b->head = 0;
@@ -138,10 +143,10 @@ void post_splits_to_server(GsmState *s, SplitQueue *q, const char *r_id)
     while (!queue_is_empty(q))
     {
         pop_split_from_queue(q, msg);
-        strcat(msg, "&r=");
-        strcat(msg, r_id);
-        gsm_http_post(s, msg);
-        //gsm_http_post(s, "test");
+        //strcat(msg, "&r=");
+        //strcat(msg, r_id);
+        //gsm_http_post(s, msg);
+        gsm_http_post(s, "test");
     }
 }
 
