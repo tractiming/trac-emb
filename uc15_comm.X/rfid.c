@@ -3,8 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "rfid.h"
-#include "gsm.h"
-#include "picsetup.h"
+#include "NU32.h"
 #include "comm.h"
 
 SplitQueue rfid_split_queue;
@@ -104,7 +103,7 @@ void clear_buffer(LineBuffer *b)
     b->indx = 0;
 }
 
-void rfid_add_to_buffer(LineBuffer *b, char c)
+void add_char_to_buffer(LineBuffer *b, char c)
 {
 
     if (c == '\n')
@@ -129,6 +128,7 @@ void update_splits(SplitQueue *q, LineBuffer *b)
 {
    while (b->tail != b->head)
    {
+       //WriteString(SERIAL_UART, b->buf[b->tail]);
        save_split(q, b->buf[b->tail]);
        b->buf[b->tail][0] = '\0';
        b->tail = NEXT_BUF1_INDX(b->tail);
@@ -136,7 +136,7 @@ void update_splits(SplitQueue *q, LineBuffer *b)
 
 }
 
-void post_splits_to_server(GsmState *s, SplitQueue *q, const char *r_id)
+/*void post_splits_to_server(GsmState *s, SplitQueue *q, const char *r_id)
 {
     char msg[MAX_MSG_LEN];
     while (!queue_is_empty(q))
@@ -148,7 +148,7 @@ void post_splits_to_server(GsmState *s, SplitQueue *q, const char *r_id)
         gsm_http_post(s, "test");
     }
 }
-
+*/
 void rfid_init(void)
 {
     delay_ms(BOOT_WAIT*1000);

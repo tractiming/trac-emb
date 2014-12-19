@@ -1,3 +1,4 @@
+#define SETUP
 #include <p32xxxx.h>
 #include <plib.h>
 #include "comm.h"
@@ -5,28 +6,7 @@
 #include "gsm.h"
 #include "rfid.h"
 
-#pragma config IOL1WAY  = OFF       // Peripheral Pin Select Configuration, allow mult reconfig
-#pragma config PMDL1WAY = OFF	    // Peripheral Module Disable Config, allow mult reconfig
-#pragma config FPLLODIV = DIV_2     // PLL Output Divider
-#pragma config FPLLMUL  = MUL_20    // PLL Multiplier
-#pragma config FPLLIDIV = DIV_2     // PLL Input Divider
-#pragma config FWDTEN   = OFF       // Watchdog Timer
-#pragma config WDTPS    = PS8192    // Watchdog Timer Postscale
-#pragma config FCKSM    = CSDCMD    // Clock Switching & Fail Safe Clock Monitor
-#pragma config FPBDIV   = DIV_1     // Peripheral Clock divisor
-#pragma config OSCIOFNC = OFF       // CLKO Enable
-#pragma config POSCMOD  = OFF       // Primary Oscillator
-#pragma config IESO     = OFF       // Internal/External Switch-over
-#pragma config FSOSCEN  = OFF       // Secondary Oscillator Enable (KLO was off)
-#pragma config FNOSC    = FRCPLL    // Oscillator Selection
-#pragma config CP       = OFF       // Code Protect
-#pragma config BWP      = ON        // Boot Flash Write Protect
-#pragma config PWP      = OFF       // Program Flash Write Protect
-#pragma config ICESEL   = ICS_PGx1  // ICE/ICD Comm Channel Select
-#pragma config JTAGEN   = OFF       // JTAG Enable
-#pragma config DEBUG    = OFF       // Background Debugger Enable
-
-#define MAX_LEN 100
+#define MAX_MESSAGE_LENGTH 100
 const char reader_id[] = "A1010"; // Unique reader id for this device.
 
 int main(void) {
@@ -35,6 +15,8 @@ int main(void) {
     CFGCONbits.JTAGEN = 0;
     SYSTEMConfigPerformance(SYS_FREQ);
     setup_pins();
+
+    char message[MAX_MESSAGE_LENGTH];
 
     GSM_LED = 0;
     RFID_LED = 0;
@@ -47,7 +29,7 @@ int main(void) {
     INTEnableSystemMultiVectoredInt();
     delay_ms(5000);
 
-    // Initialize the GSM module. On failure, turn off module and reset.jk
+    // Initialize the GSM module. On failure, turn off module and reset.
     if (gsm_init(&gsm_state))
     {
         gsm_pwr_off(&gsm_state);
@@ -63,21 +45,20 @@ int main(void) {
 
     while (1) {
         
-        // Test writing to the tag buffer.
-        //const char test[] = "Tag:11C4 A324 2345, Last:2014/9/8 15:34:12.123, Ant:0\n";
-        //int i;
-        //for (i=0; i<strlen(test); i++)
-        //    add_char_to_buffer(&rfid_line_buffer, test[i]);
-
-        
         // Post any new data in the split buffer.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
-        post_splits_to_server(&gsm_state, &rfid_split_queue, reader_id);
-        delay_ms(150);
-        //gsm_http_post(&gsm_state, "Hello");
 
-        //write_string(RFID_UART, rfid_line_buffer.buf[rfid_line_buffer.head]);
-        //write_string(RFID_UART, "\n");
+        while (!queue_is_empty(&rfid_split_queue))
+        {
+            pop_split_from_queue(&rfid_split_queue, message);
+            strcat(message, "&r=");
+            strcat(message, reader_id);
+            gsm_http_post(&gsm_state, message);
+            delay_ms(1000);
+        }
+
+        delay_ms(150);
+
     };
     
     return 0;
@@ -111,8 +92,7 @@ void __ISR(RFID_UART_VEC, IPL7SOFT) IntRFIDUartHandler(void) {
 
       // Add the next character to the serial buffer.
       char data = UARTGetDataByte(RFID_UART);
-      add_char_to_buffer(&rfid_line_buffer, data);
-      //put_character(RFID_UART, data);
+      rfid_add_to_buffer(&rfid_line_buffer, data);
 
       // Clear the RX interrupt flag.
       INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));

@@ -2,14 +2,17 @@
 #include <plib.h>
 #include <string.h>
 #include "comm.h"
-#include "gsm.h"
+#include "picsetup.h"
 
-#define SYS_FREQ 40000000L
-char message[100];
+/* Delay for a given number of msecs. */
+void delay_ms(int msec)
+{
+    long int delay = (SYS_FREQ/2000)*msec;
+    WriteCoreTimer(0);
+    while (ReadCoreTimer()<delay);
+}
 
-/* Sets up UART for communication with GSM. By default it is configured with
- * an RX interrupt.
- */
+/* Set up UART for communication with GSM. Configure with RX interrupt. */
 void gsm_init_uart(void) {
 
     UARTConfigure(GSM_UART, UART_ENABLE_PINS_TX_RX_ONLY );
@@ -37,18 +40,8 @@ void rfid_init_uart(void) {
     INTSetVectorSubPriority(RFID_INT_VEC, INT_SUB_PRIORITY_LEVEL_0);
 };
 
-/* Open heartbeat timer. Not needed if connections are not persistent. */
-void hb_tmr_init(void) {
-    // Configured at 10 Hz by default.
-    OpenTimer2(T2_ON | T2_PS_1_256 | T2_SOURCE_INT, 15624);
-    mT2SetIntPriority(5);
-    mT2ClearIntFlag();
-    mT2IntEnable(1);
-}
-
 /* Write a string over the serial port. */
 void write_string(UART_MODULE id, char *string) {
-
   while (*string != '\0') {
     while (!UARTTransmitterIsReady(id));
     UARTSendDataByte(id, (char) *string);
@@ -68,22 +61,33 @@ void put_character(UART_MODULE id, char character) {
 void read_uart(UART_MODULE id, char * message, int max_len) {
   char data;
   int complete = 0, num_bytes = 0;
-  // loop until you get a '\r' or '\n'
+
   while (!complete) {
     if (UARTReceivedDataIsAvailable(id)) {
       data = UARTGetDataByte(id);
       if ((data == '\n') || (data == '\r')) {
         complete = 1;
-      } else {
+      }
+      else {
         message[num_bytes] = data;
         num_bytes++;
-        // roll over if the array is too small
+        
         if (num_bytes >= max_len) {
           num_bytes = 0;
         }
       }
     }
   }
-  // end the string
+  
   message[num_bytes] = '\0';
 };
+
+
+/* Open heartbeat timer. Not needed if connections are not persistent. */
+/*void hb_tmr_init(void) {
+    // Configured at 10 Hz by default.
+    OpenTimer2(T2_ON | T2_PS_1_256 | T2_SOURCE_INT, 15624);
+    mT2SetIntPriority(5);
+    mT2ClearIntFlag();
+    mT2IntEnable(1);
+}*/

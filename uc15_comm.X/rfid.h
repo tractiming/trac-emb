@@ -1,8 +1,6 @@
 #ifndef RFID_H
 #define RFID_H
 
-#include "gsm.h"
-
 #define NUM_SPLITS 6
 #define NEXT_SPLIT_INDX(i) ((i+1) % NUM_SPLITS)
 #define BUF_LEN1 20
@@ -38,14 +36,10 @@ typedef struct
 extern SplitQueue rfid_split_queue;
 extern LineBuffer rfid_line_buffer;
 
-void rfid_add_to_buffer(LineBuffer *, char);
+void get_split_msg(Split *, char *);
+void add_char_to_buffer(LineBuffer *, char);
 void update_splits(SplitQueue *, LineBuffer *);
-void rfid_init(void);
-int queue_is_empty(SplitQueue *);
-void pop_split_from_queue(SplitQueue *, char *);
-
-
-//void get_split_msg(Split *, char *);
 //void post_splits_to_server(GsmState *, SplitQueue *, const char*);
+void rfid_init(void);
 
 #endif	/* RFID_H */
