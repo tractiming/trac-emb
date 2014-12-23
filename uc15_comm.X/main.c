@@ -84,14 +84,14 @@ int main(void) {
 
     NU32_Startup();
 
-    TRISAbits.TRISA2 = 1;
+    //TRISAbits.TRISA2 = 1;
     
-    delay_ms(1000);
-    TRISDbits.TRISD0 = 0;
-    LATDbits.LATD0 = 1;
-    delay_ms(200);
-    LATDbits.LATD0 = 0;
-    delay_ms(10000);
+    //delay_ms(1000);
+    //TRISDbits.TRISD0 = 0;
+    //LATDbits.LATD0 = 1;
+    //delay_ms(200);
+    //LATDbits.LATD0 = 0;
+    //delay_ms(10000);
 
     // Set up serial communication.
     NU32_EnableUART1Interrupt();
@@ -99,6 +99,7 @@ int main(void) {
     U2STAbits.UTXEN = 1;
     init_uc15_uart();
 
+#ifdef FULL_DEMO
     U5STAbits.URXEN = 1;
     U5STAbits.UTXEN = 1;
     init_alien_uart();
@@ -122,10 +123,10 @@ int main(void) {
     gsm_set_http_url(&gsm_state, post_domain_name);
     delay_ms(200);
     gsm_http_post(&gsm_state, "testing");
-
+#endif
 
     while(1) {
-
+#ifdef FULL_DEMO
         //if (!NU32USER) {
         //    delay_ms(250);
         //    //gsm_send_command(&gsm_state, GSM_OK, "AT\r", GSM_TIMEOUT);
@@ -155,7 +156,7 @@ int main(void) {
         }
 
         delay_ms(150);
-         
+#endif
 
     }
     return 0;

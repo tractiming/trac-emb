@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <plib.h>
+//#include <plib.h>
 #include <string.h>
 #include "comm.h"
 #include "picsetup.h"
@@ -36,8 +36,8 @@ void rfid_init_uart(void) {
     UARTEnable(RFID_UART, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
 
     INTEnable(RFID_RX_INT, INT_ENABLED);
-    INTSetVectorPriority(RFID_INT_VEC, INT_PRIORITY_LEVEL_7);
-    INTSetVectorSubPriority(RFID_INT_VEC, INT_SUB_PRIORITY_LEVEL_0);
+    INTSetVectorPriority(RFID_INT_VEC, INT_PRIORITY_LEVEL_6);
+    INTSetVectorSubPriority(RFID_INT_VEC, INT_SUB_PRIORITY_LEVEL_1);
 };
 
 /* Write a string over the serial port. */

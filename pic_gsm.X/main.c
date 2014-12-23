@@ -1,13 +1,12 @@
 #define SETUP
-#include <p32xxxx.h>
-#include <plib.h>
-#include "comm.h"
 #include "picsetup.h"
+#include "comm.h"
 #include "gsm.h"
 #include "rfid.h"
 
 #define MAX_MESSAGE_LENGTH 100
 const char reader_id[] = "A1010"; // Unique reader id for this device.
+
 
 int main(void) {
 
@@ -15,15 +14,15 @@ int main(void) {
     CFGCONbits.JTAGEN = 0;
     SYSTEMConfigPerformance(SYS_FREQ);
     setup_pins();
+    setup_shutdown_int();
+    //INTEnableSystemMultiVectoredInt();
 
-    char message[MAX_MESSAGE_LENGTH];
+    //char message[MAX_MESSAGE_LENGTH];
 
-    GSM_LED = 0;
-    RFID_LED = 0;
-    
     // Set up UART communication with GSM. This is only
     // setting registers on the pic, so don't worry about failure.
     gsm_init_uart();
+    rfid_init_uart();
 
     // Start interrupts (allows pic to receive uart messages).
     INTEnableSystemMultiVectoredInt();
@@ -32,19 +31,19 @@ int main(void) {
     // Initialize the GSM module. On failure, turn off module and reset.
     if (gsm_init(&gsm_state))
     {
-        gsm_pwr_off(&gsm_state);
-        delay_ms(2000);
-        pic_reset();
+        //gsm_pwr_off(&gsm_state);
+        //delay_ms(2000);
+        //pic_reset();
     }
     GSM_LED = 1;
 
     // Inititialize the rfid reader.
-    rfid_init_uart();
-    rfid_init();
+    
+    //rfid_init();
     RFID_LED = 1;
 
     while (1) {
-        
+#ifdef GARBAGE
         // Post any new data in the split buffer.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
 
@@ -58,9 +57,9 @@ int main(void) {
         }
 
         delay_ms(150);
-
+#endif
     };
-    
+
     return 0;
 }
 
@@ -72,6 +71,7 @@ void __ISR(GSM_UART_VEC, IPL6SOFT) IntGSMUartHandler(void) {
 
     char data = UARTGetDataByte(GSM_UART);
     gsm_add_to_buffer(&gsm_state, data);
+    put_character(RFID_UART, data);
 
     // Clear the RX interrupt flag.
     INTClearFlag(INT_SOURCE_UART_RX(GSM_UART));
@@ -84,7 +84,7 @@ void __ISR(GSM_UART_VEC, IPL6SOFT) IntGSMUartHandler(void) {
 }
 
 /* Interrupt for handling uart communication with rfid reader. */
-void __ISR(RFID_UART_VEC, IPL7SOFT) IntRFIDUartHandler(void) {
+void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
 
   // Is this an RX interrupt?
   if (INTGetFlag(INT_SOURCE_UART_RX(RFID_UART)))
@@ -92,7 +92,8 @@ void __ISR(RFID_UART_VEC, IPL7SOFT) IntRFIDUartHandler(void) {
 
       // Add the next character to the serial buffer.
       char data = UARTGetDataByte(RFID_UART);
-      rfid_add_to_buffer(&rfid_line_buffer, data);
+      put_character(GSM_UART, data);
+      //rfid_add_to_buffer(&rfid_line_buffer, data);
 
       // Clear the RX interrupt flag.
       INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));
@@ -103,6 +104,22 @@ void __ISR(RFID_UART_VEC, IPL7SOFT) IntRFIDUartHandler(void) {
   {
       INTClearFlag(INT_SOURCE_UART_TX(RFID_UART));
   }
+}
+
+/* Shutdown ISR. */
+void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
+    GSM_LED = 0;
+
+    // Send shutoff signal to GSM.
+    //if (gsm_on)
+    gsm_pwr_off(&gsm_state);
+    GSM_LED = 1;
+
+    // Send KILL signal to timer.
+
+    // Wait to die.
+    mINT3ClearIntFlag();
+    while(1);
 }
 
 /* This is junk, but useful to reference. */

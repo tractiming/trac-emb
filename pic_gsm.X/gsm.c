@@ -1,4 +1,4 @@
-#include <plib.h>
+//#include <plib.h>
 #include <string.h>
 #include <stdlib.h>
 #include "picsetup.h"
@@ -6,6 +6,8 @@
 #include "comm.h"
 
 GsmState gsm_state;
+unsigned gsm_on;
+
 const char apn[] = "ATT.MVNO";
 //const char post_domain_name[] = "http://traclock.no-ip.biz:8000/api/updates/";
 const char post_domain_name[] = "http://trac-us.appspot.com/api/updates/";
@@ -107,10 +109,12 @@ int gsm_send_command(GsmState *s, GsmResponse response,
 void gsm_pwr_on(void)
 {
     // To turn on, send high pulse for >0.1 sec. Delay to ensure module starts.
+    delay_ms(1000);
     POWERKEY = 1;
     delay_ms(250);
     POWERKEY = 0;
     delay_ms(8000);
+    gsm_on = 1;
 }
 
 /* Turn off the gsm by toggling power pin. */
@@ -121,6 +125,7 @@ int gsm_pwr_off(GsmState *s)
     // latter approach here.
     int err = gsm_send_command(s, GSM_PWR_DOWN, "AT+QPOWD=1\r", GSM_TIMEOUT);
     delay_ms(1000);
+    gsm_on = 0;
     return err;
 }
 

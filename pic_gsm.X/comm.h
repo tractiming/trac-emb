@@ -1,4 +1,5 @@
-#include <plib.h>
+//#include <plib.h>
+#include "picsetup.h"
 
 #ifndef COMM_H
 #define COMM_H

@@ -1,6 +1,7 @@
 #ifndef PICSETUP_H
 #define	PICSETUP_H
 
+#define _SUPPRESS_PLIB_WARNING
 #include <p32xxxx.h>
 #include <plib.h>
 
@@ -38,8 +39,10 @@
 #define POWERKEY LATAbits.LATA2
 #define GSM_LED LATBbits.LATB4
 #define RFID_LED LATBbits.LATB15
+#define KILL LATBbits.LATB14
 
 void setup_pins(void);
 void pic_reset(void);
+void setup_shutdown_int(void);
 
 #endif	/* PICSETUP_H */

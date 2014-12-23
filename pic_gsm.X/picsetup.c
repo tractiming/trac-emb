@@ -1,6 +1,13 @@
-#include <plib.h>
+//#include <p32xxxx.h>
+//#include <plib.h>
+#include "picsetup.h"
 
 void setup_pins(void) {
+
+        //CFGCONbits.JTAGEN = 0;
+        //SYSTEMConfigPerformance(SYS_FREQ);
+        //INTEnableSystemMultiVectoredInt();
+
 	// Set all analog input pins to digital mode.
 	ANSELA = 0;
 	ANSELB = 0;
@@ -24,12 +31,25 @@ void setup_pins(void) {
         // RB15 is the RFID indicator LED.
         TRISBbits.TRISB15 = 0;
 
-        // RB14 is push button.
-        TRISBbits.TRISB14 = 1;
+        // RB14 (Pin 25) is the kill signal to the shutdown timer.
+        TRISBbits.TRISB14 = 0;
+
+        // RB5 (Pin 14) is INT3 for shutdown interrupt.
+        INT3Rbits.INT3R = 0b0001;
+        TRISBbits.TRISB5 = 1;
         
 };
 
 /* Restarts pic (for example, if an initialization task fails).*/
 void pic_reset(void) {
     SoftReset();
+}
+
+/* Enable INT2, which accepts the kill signal. */
+void setup_shutdown_int(void) {
+    mINT3SetEdgeMode(0); // Rising edge = 1. Falling edge = 0.
+    mINT3SetIntPriority(5);
+    mINT3SetIntSubPriority(0);
+    mINT3ClearIntFlag();
+    mINT3IntEnable(1);
 }

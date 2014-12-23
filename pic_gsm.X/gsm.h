@@ -32,6 +32,7 @@ typedef struct
 extern const char apn[];
 extern const char post_domain_name[];
 extern GsmState gsm_state;
+extern unsigned gsm_on;
 
 void gsm_add_to_buffer(GsmState *, char);
 int gsm_send_command(GsmState *, GsmResponse, char *, unsigned);
