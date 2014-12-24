@@ -41,10 +41,12 @@ extern LineBuffer rfid_line_buffer;
 void rfid_add_to_buffer(LineBuffer *, char);
 void update_splits(SplitQueue *, LineBuffer *);
 void rfid_init(void);
-int queue_is_empty(SplitQueue *);
-void pop_split_from_queue(SplitQueue *, char *);
+int get_next_split_msg(SplitQueue *, const char *, char *);
+char *strtok_r (char *, const char *, char **);
 
 
+//int queue_is_empty(SplitQueue *);
+//void pop_split_from_queue(SplitQueue *, char *);
 //void get_split_msg(Split *, char *);
 //void post_splits_to_server(GsmState *, SplitQueue *, const char*);
 

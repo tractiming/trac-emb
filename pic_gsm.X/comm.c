@@ -1,13 +1,12 @@
 #include <stdio.h>
-//#include <plib.h>
 #include <string.h>
-#include "comm.h"
 #include "picsetup.h"
+#include "comm.h"
 
 /* Delay for a given number of msecs. */
-void delay_ms(int msec)
+void delay_ms(unsigned int msec)
 {
-    long int delay = (SYS_FREQ/2000)*msec;
+    unsigned int delay = (SYS_FREQ/2000)*msec;
     WriteCoreTimer(0);
     while (ReadCoreTimer()<delay);
 }
@@ -26,7 +25,7 @@ void gsm_init_uart(void) {
     INTSetVectorSubPriority(GSM_INT_VEC, INT_SUB_PRIORITY_LEVEL_0);
 };
 
-/* Initialize RFID communication. */
+/* Set up UART for communication with Alien. Configure with RX interrupt. */
 void rfid_init_uart(void) {
 
     UARTConfigure(RFID_UART, UART_ENABLE_PINS_TX_RX_ONLY );
@@ -81,13 +80,3 @@ void read_uart(UART_MODULE id, char * message, int max_len) {
   
   message[num_bytes] = '\0';
 };
-
-
-/* Open heartbeat timer. Not needed if connections are not persistent. */
-/*void hb_tmr_init(void) {
-    // Configured at 10 Hz by default.
-    OpenTimer2(T2_ON | T2_PS_1_256 | T2_SOURCE_INT, 15624);
-    mT2SetIntPriority(5);
-    mT2ClearIntFlag();
-    mT2IntEnable(1);
-}*/

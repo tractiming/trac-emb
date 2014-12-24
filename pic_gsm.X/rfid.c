@@ -1,40 +1,36 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "rfid.h"
-#include "gsm.h"
 #include "picsetup.h"
+#include "rfid.h"
 #include "comm.h"
 
 SplitQueue rfid_split_queue;
 LineBuffer rfid_line_buffer;
 
-char test_msg[200];
-
-void clear_queue(SplitQueue *q)
+static void clear_queue(SplitQueue *q)
 {
     q->head = 0;
     q->tail = 0;
 }
 
-int queue_is_empty(SplitQueue *q)
+static int queue_is_empty(SplitQueue *q)
 {
     return ((q->head) == (q->tail));
 }
 
-void add_split_to_queue(SplitQueue *q, Split *s)
+//static void add_split_to_queue(SplitQueue *q, Split *s)
+//{
+//    memcpy(&(q->queue[q->head]), s, sizeof(Split));
+//    q->head = NEXT_SPLIT_INDX(q->head);
+//}
+
+static void get_split_msg(Split *s, char *str)
 {
-    memcpy(&(q->queue[q->head]), s, sizeof(Split));
-    q->head = NEXT_SPLIT_INDX(q->head);
+    sprintf(str, "id=%s&time=%s&ant=%s", s->tag_id, s->time, s->ant);
 }
 
-void get_split_msg(Split *s, char *str)
-{
-    sprintf(str, "id=%s&time=%s&ant=%s\0", s->tag_id, s->time, s->ant);
-}
-
-void pop_split_from_queue(SplitQueue *q, char *dest)
+static void pop_split_from_queue(SplitQueue *q, char *dest)
 {
     if (queue_is_empty(q))
         return;
@@ -136,17 +132,16 @@ void update_splits(SplitQueue *q, LineBuffer *b)
 
 }
 
-void post_splits_to_server(GsmState *s, SplitQueue *q, const char *r_id)
+int get_next_split_msg(SplitQueue *q, const char *r_id, char *msg)
 {
-    char msg[MAX_MSG_LEN];
-    while (!queue_is_empty(q))
-    {
-        pop_split_from_queue(q, msg);
-        //strcat(msg, "&r=");
-        //strcat(msg, r_id);
-        //gsm_http_post(s, msg);
-        gsm_http_post(s, "test");
-    }
+    if (queue_is_empty(q))
+        return 0;
+
+    pop_split_from_queue(q, msg);
+    strcat(msg, "&r=");
+    strcat(msg, r_id);
+    return 1;
+
 }
 
 void rfid_init(void)

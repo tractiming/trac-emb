@@ -1,4 +1,3 @@
-//#include <plib.h>
 #include <string.h>
 #include <stdlib.h>
 #include "picsetup.h"
@@ -12,7 +11,7 @@ const char apn[] = "ATT.MVNO";
 //const char post_domain_name[] = "http://traclock.no-ip.biz:8000/api/updates/";
 const char post_domain_name[] = "http://trac-us.appspot.com/api/updates/";
 
-void gsm_clear_buffer(GsmState *s)
+static void gsm_clear_buffer(GsmState *s)
 {
     s->indx = 0;
     memset(s->buf, 0, GSM_BUFFER_LEN*sizeof(char));
@@ -24,7 +23,7 @@ void gsm_add_to_buffer(GsmState *s, char c)
     s->indx = NEXT_GSM_INDX(s->indx);
 }
 
-int compare_response(GsmState *s, const char *str)
+static int compare_response(GsmState *s, const char *str)
 {
     // TODO: optimize this since it is used very frequently.
     /* Note: here we do separate checks for the token in the wrapped and 
@@ -51,7 +50,7 @@ int compare_response(GsmState *s, const char *str)
 }
 
 /* Update the state of the gsm module. */
-void gsm_update_state(GsmState *s)
+static void gsm_update_state(GsmState *s)
 {
     /* For the most part, the module will return "OK" followed by line return
      * and new line. However, the http post function does not give the return/
@@ -75,7 +74,7 @@ void gsm_update_state(GsmState *s)
 }
 
 /* Wait for the GSM to give response. Timeout if not received. */
-int gsm_wait_for_response(GsmState *s, GsmResponse resp, unsigned timeout)
+static int gsm_wait_for_response(GsmState *s, GsmResponse resp, unsigned timeout)
 {
     s->resp = GSM_NONE;
 
@@ -97,7 +96,7 @@ int gsm_wait_for_response(GsmState *s, GsmResponse resp, unsigned timeout)
 }
 
 /* Send command to GSM and wait for response or timeout. */
-int gsm_send_command(GsmState *s, GsmResponse response,
+static int gsm_send_command(GsmState *s, GsmResponse response,
                      char *command, unsigned timeout)
 {
     gsm_clear_buffer(s);
@@ -130,7 +129,7 @@ int gsm_pwr_off(GsmState *s)
 }
 
 /* Sets the HTTP url to send data to. */
-int gsm_set_http_url(GsmState *s, const char *url) {
+static int gsm_set_http_url(GsmState *s, const char *url) {
 
     int len = strlen(url);
     char msg[100];
@@ -196,7 +195,9 @@ int gsm_init(GsmState *s)
         return -2;
     delay_ms(200);
 
-    if (gsm_send_command(s, GSM_OK, "AT+QICSGP=1,1,\"ATT.MVNO\",\"\",\"\",1\r", GSM_TIMEOUT))
+    char msg[MAX_STR_LEN];
+    sprintf(msg, "AT+QICSGP=1,1,\"%s\",\"\",\"\",1\r", apn);
+    if (gsm_send_command(s, GSM_OK, msg, GSM_TIMEOUT))
         return -3;
     delay_ms(200);
 
@@ -210,305 +211,3 @@ int gsm_init(GsmState *s)
 
     return 0;
 }
-
-
-/* Brings up connection with the GPRS network. */
-/*int gsm_gprs_init(GsmState *s, const char *apn) {
-
-    int delay_time = 100;
-    char msg[100];
-
-    // Set the context 0 as FGCNT.
-    if (gsm_send_command(s, GSM_OK, "AT+QIFGCNT=0\r", GSM_TIMEOUT))
-        return -1;
-    delay_ms(delay_time);
-
-    // Set APN.
-    strcpy(msg, "AT+QICSGP=1,\"");
-    strcat(msg, apn);
-    strcat(msg, "\"\r");
-    if (gsm_send_command(s, GSM_OK, "AT+QICSGP=1,\"ATT.MVNO\"\r", GSM_TIMEOUT))
-        return -1;
-    delay_ms(delay_time);
-
-    // Register the TCP/IP stack.
-    if (gsm_send_command(s, GSM_OK, "AT+QIREGAPP\r", 10*GSM_TIMEOUT))
-        return -1;
-*/
-    /* The following pause is essential. We need to give the module some time
-     * after registering the network and before asking for a gprs connection.
-     * (3 sec does not seem to work, but 5 does.)
-     */
-/*    delay_ms(6000);
-
-    // Activate FGCNT. Brings up the wireless connection.
-    if (gsm_send_command(s, GSM_OK, "AT+QIACT\r", 20*GSM_TIMEOUT))
-        return -1;
-    delay_ms(delay_time);
-
-    return 0;
-}*/
-
-/* Deactivate the GPRS. */
-/*int gsm_grps_deact(GsmState *s)
-{
-    return gsm_send_command(s, GSM_OK, "AT+QIDEACT\r", 3*GSM_TIMEOUT);
-}*/
-
-/* Checks if sim card is present. */
-//int gsm_chk_sim(void) {
-//
-//    if (gsm_send_command("AT+CPIN?\r", GSM_OK, GSM_TIMEOUT))
-//        return -1;
-//
-//    return 0;
-//}
-/* Establish TCP connection with server. This assumes that the GPRS is already
- * activated and the server is listening on the correct port.
- */
-/*int gsm_tcp_connect(GsmState *s, const char* ip, int port) {
-
-    char itoa_bfr[8];
-    itoa(itoa_bfr, port, 10);
-    char msg[100];
-
-    strcpy(msg, "AT+QIOPEN=\"TCP\",\"");
-    strcat(msg, ip);
-    strcat(msg, "\",");
-    strcat(msg, itoa_bfr);
-    strcat(msg, "\r");
-
-    if (gsm_send_command(s, GSM_OK, msg, 5*GSM_TIMEOUT))
-        return -1;
-    return 0;
-}*/
-// Closes the tcp connection and deactivates gprs.
-/*int gsm_tcp_close(void) {
-
-    // Switch back to AT command mode.
-    if (gsm_data_mode) {
-        //delay_ms(500);
-        if (gsm_send_command("+++", GSM_OK, GSM_TIMEOUT))
-            return -1;
-        //delay_ms(500);
-        gsm_data_mode = 0;
-    }
-
-    // Close the connection.
-    if (gsm_send_command("AT+QICLOSE\r", GSM_OK, GSM_TIMEOUT))
-        return -1;
-
-}*/
-
-/* Writes a message over tcp. */
-/*int gsm_tcp_send_data(char *data) {
-
-    // If we are not in data mode, we cannot write the message directly.
-    if (gsm_data_mode != 1)
-        return -1;
-
-    // Write the message and terminating character.
-    write_string(GSM_UART, data);
-    write_string(GSM_UART, "\032");
-    
-    return 0;
-    
-}*/
-
-/* Returns whether the gsm is in data or text mode. */
-//unsigned gsm_get_data_mode(void) {
-//    return gsm_data_mode;
-//}
-
-/* Returns 1 if the connection has been lost. */
-//unsigned gsm_chk_tcp_conn(void) {
-//    return gsm_tcp_lost;
-//}
-
-/* Resets the tcp connection after a failure. */
-/*int gsm_tcp_reset(void) {
-
-    // Assume the abnormaility was caught by the "closed" command,
-    // then the gsm is already in command mode.
-    gsm_data_mode = 0;
-
-    // Since connection is already closed, deactivate GPRS context.
-    if (gsm_send_command("AT+QIDEACT\r", GSM_OK, 3*GSM_TIMEOUT))
-        return -1;
-
-    delay_ms(1000);
-
-    // Reactivate the GPRS.
-    if (gsm_send_command("AT+QIACT\r", GSM_OK, 10*GSM_TIMEOUT))
-        return -1;
-
-    delay_ms(1000);
-
-    // Try to connect to the server.
-    if (gsm_send_command("AT+QIOPEN=\"TCP\",\"76.12.155.219\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
-        return -1;
-
-    gsm_data_mode = 1;
-    return 0;
-
-}*/
-
-// The following is no longer in use, but kept for reference.
-//Deprecated.
-/* Send a command to the gsm module and wait for a response. */
-/*
-int gsm_send_command_old(char *command, GSMResponse response) {
-
-    write_string(GSM_UART, command);
-
-    int k = 0;
-    while(gsm_get_state() != response) {
-        if (k == GSM_TIMEOUT)
-            return -1;
-        k++;
-    }
-    return 0;
-
-}
-*/
-//Deprecated
-/* Establish tcp connection. Important comments in function body! */
-/*
-int gsm_tcp_connect(void) {
-
-    // Set the context 0 as FGCNT.
-    if (gsm_send_command("AT+QIFGCNT=0\r", GSM_OK, GSM_TIMEOUT))
-        return -1;
-    delay_ms(100);
-
-    // Set APN.
-    if (gsm_send_command("AT+QICSGP=1,\"ATT.MVNO\"\r", GSM_OK, GSM_TIMEOUT))
-        return -1;
-    delay_ms(100);
-
-    // Disable function of MUXIP. (Set as single connection mode.) )
-    if (gsm_send_command("AT+QIMUX=0\r", GSM_OK, GSM_TIMEOUT))
-        return -1;
-    delay_ms(100);
-
-    // Set the session mode as transparent.
-    // NOTE: for some reason, this always fails whenever the status of the SIM card
-    // is queried before calling this function. don't ask...
-    if (gsm_send_command("AT+QIMODE=1\r", GSM_OK, 2*GSM_TIMEOUT))
-        return -1;
-    delay_ms(100);
-
-    // Other internal settings.
-    if (gsm_send_command("AT+QITCFG=3,2,512,1\r", GSM_OK, GSM_TIMEOUT))
-        return -1;
-
-    // NOTE: The default behavior is to expect a dotted IP address.
-    // Use IP address (not domain name) as the address to establish TCP/UDP session.
-    //if (gsm_send_command("AT+QIDNSIP=0\r", GSM_OK, GSM_TIMEOUT))
-    //    return -1;
-    //delay_ms(100);
-
-    // Register the TCP/IP stack.
-    if (gsm_send_command("AT+QIREGAPP\r", GSM_OK, 3*GSM_TIMEOUT))
-        return -1;
-
-    // The following pause is essential. We need to give the module some time
-    // after registering the network and before asking for a gprs connection.
-    delay_ms(2000);
-
-    // Activate FGCNT. Brings up the wireless connection.
-    if (gsm_send_command("AT+QIACT\r", GSM_OK, 18*GSM_TIMEOUT))
-        return -1;
-    delay_ms(100);
-
-    // Establish TCP connection with server.
-    //TODO: Don't hardcode these.
-    //TODO: Wait for "connect" status.
-    //if (gsm_send_command("AT+QIOPEN=\"TCP\",\"traclock.no-ip.biz\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
-    if (gsm_send_command("AT+QIOPEN=\"TCP\",\"76.12.155.219\",36740\r", GSM_OK, 5*GSM_TIMEOUT))
-        return -1;
-
-    // By default, establishing the tcp connection puts us in data mode.
-    gsm_data_mode = 1;
-
-    return 0;
-
-}
-*/
-/* Update the state of the gsm module. */
-/*void gsm_update_state_old(GsmState *s, char data) {
-
-    // Add byte to buffer
-    s->indx++;
-    if (s->indx == GSM_BUFFER_LEN)
-        s->indx = -1;
-    gsm_response_buffer[gsm_buffer_indx] = data;
-
-    // Check for changes in state.
-    // For the most part, the module will return "OK" followed by line return
-    // and new line. However, the http post function does not give the return/
-    // new line. Therefore we explicitly only check for the two characters "OK".
-    if ((gsm_response_buffer[gsm_buffer_indx]     ==  'K') &&
-        (gsm_response_buffer[buffer_indx_prev(1)] ==  'O')) {
-        response_rcvd = 1;
-        gsm_state = GSM_OK;
-    }
-
-    else if ((gsm_response_buffer[gsm_buffer_indx] == '>')) {
-        response_rcvd = 1;
-        gsm_state = GSM_READY;
-    }
-
-    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'T') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == 'C') &&
-             (gsm_response_buffer[buffer_indx_prev(2)] == 'E') &&
-             (gsm_response_buffer[buffer_indx_prev(3)] == 'N') &&
-             (gsm_response_buffer[buffer_indx_prev(4)] == 'N') &&
-             (gsm_response_buffer[buffer_indx_prev(5)] == 'O') &&
-             (gsm_response_buffer[buffer_indx_prev(6)] == 'C')) {
-        response_rcvd = 1;
-        gsm_state = GSM_CONNECT;
-    }
-
-    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'R') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == 'O') &&
-             (gsm_response_buffer[buffer_indx_prev(2)] == 'R') &&
-             (gsm_response_buffer[buffer_indx_prev(3)] == 'R') &&
-             (gsm_response_buffer[buffer_indx_prev(4)] == 'E')) {
-        response_rcvd = 1;
-        gsm_state = GSM_ERROR;
-    }
-
-    else if ((gsm_response_buffer[gsm_buffer_indx]     == 'D') &&
-             (gsm_response_buffer[buffer_indx_prev(1)] == 'E') &&
-             (gsm_response_buffer[buffer_indx_prev(2)] == 'S') &&
-             (gsm_response_buffer[buffer_indx_prev(3)] == 'O') &&
-             (gsm_response_buffer[buffer_indx_prev(4)] == 'L') &&
-             (gsm_response_buffer[buffer_indx_prev(5)] == 'C')) {
-        response_rcvd = 1;
-        gsm_state = GSM_CLOSED;
-        if (gsm_data_mode)
-            gsm_tcp_lost = 1;
-    }
-
-}*/
-
-/* Returns the state of the gsm module. */
-/*GSMResponse gsm_get_state(void) {
-    if (response_rcvd) {
-        response_rcvd = 0;
-        return gsm_state;
-    }
-    else
-        return GSM_NONE;
-}
-*/
-
-/* Get index of nth previous char in buffer, accounting for wraparound. */
-/*int prev_indx(GsmState *s, int n) {
-    int i = s->indx - n;
-    if (i >= 0)
-        return i;
-    else
-        return GSM_BUFFER_LEN+i;
-}*/

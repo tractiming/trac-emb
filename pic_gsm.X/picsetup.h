@@ -41,6 +41,8 @@
 #define RFID_LED LATBbits.LATB15
 #define KILL LATBbits.LATB14
 
+#define MAX_STR_LEN 250
+
 void setup_pins(void);
 void pic_reset(void);
 void setup_shutdown_int(void);
