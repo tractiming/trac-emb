@@ -4,6 +4,8 @@
 #include "gsm.h"
 #include "rfid.h"
 
+#define FULL_DEMO
+
 // Unique reader id for this device.
 const char reader_id[] = "A1010"; 
 
@@ -33,7 +35,9 @@ int main(void) {
 
     char post_msg[MAX_STR_LEN];
     while (1) {
-#ifdef FULLDEMO
+
+#ifdef FULL_DEMO
+
         // Parse any new splits.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
 
@@ -45,7 +49,9 @@ int main(void) {
         }
 
         delay_ms(150);
+
 #endif
+
     };
 
     return 0;
@@ -97,7 +103,6 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
 /* Shutdown ISR. */
 void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
     
-
     // Send shutoff signal to GSM.
     GSM_LED = 0;
     if (gsm_on)
@@ -105,7 +110,9 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
 
     // Send KILL signal to timer. (Not implemented.)
 
-    // Wait to die.
+    // Disable the other UART interrupts, stopping all communication.
+    INTEnable(RFID_RX_INT, INT_DISABLED);
+    INTEnable(GSM_RX_INT, INT_DISABLED);
+
     mINT3ClearIntFlag();
-    while(1);
 }

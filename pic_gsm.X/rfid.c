@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdlib.h>
 #include "picsetup.h"
 #include "rfid.h"
 #include "comm.h"
@@ -19,12 +18,6 @@ static int queue_is_empty(SplitQueue *q)
     return ((q->head) == (q->tail));
 }
 
-//static void add_split_to_queue(SplitQueue *q, Split *s)
-//{
-//    memcpy(&(q->queue[q->head]), s, sizeof(Split));
-//    q->head = NEXT_SPLIT_INDX(q->head);
-//}
-
 static void get_split_msg(Split *s, char *str)
 {
     sprintf(str, "id=%s&time=%s&ant=%s", s->tag_id, s->time, s->ant);
@@ -39,7 +32,7 @@ static void pop_split_from_queue(SplitQueue *q, char *dest)
     q->tail = NEXT_SPLIT_INDX(q->tail);
 }
 
-int parse_split_data(char *data, Split *s)
+static int parse_split_data(char *data, Split *s)
 {
     char *tok1, *tok2;
     char *end_str, *end_tok;
@@ -80,7 +73,7 @@ int parse_split_data(char *data, Split *s)
     return 0;
 }
 
-void save_split(SplitQueue *q, char *m)
+static void save_split(SplitQueue *q, char *m)
 {
     // Only accept the split if all information has been found in the
     // notification message.
@@ -88,12 +81,7 @@ void save_split(SplitQueue *q, char *m)
         q->head = NEXT_SPLIT_INDX(q->head);
 }
 
-void clear_split(Split *s)
-{
-    //strcpy(s->tag_id, );
-}
-
-void clear_buffer(LineBuffer *b)
+static void clear_buffer(LineBuffer *b)
 {
     b->head = 0;
     b->tail = 0;

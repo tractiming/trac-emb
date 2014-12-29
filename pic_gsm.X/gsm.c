@@ -49,13 +49,9 @@ static int compare_response(GsmState *s, const char *str)
     return 0;
 }
 
-/* Update the state of the gsm module. */
+/* Update the state of the gsm module by comparing buffer contents to keywords. */
 static void gsm_update_state(GsmState *s)
 {
-    /* For the most part, the module will return "OK" followed by line return
-     * and new line. However, the http post function does not give the return/
-     * new line. Therefore we explicitly only check for the two characters "OK".
-     */
     if (compare_response(s, "OK"))
         s->resp = GSM_OK;
 
@@ -97,7 +93,7 @@ static int gsm_wait_for_response(GsmState *s, GsmResponse resp, unsigned timeout
 
 /* Send command to GSM and wait for response or timeout. */
 static int gsm_send_command(GsmState *s, GsmResponse response,
-                     char *command, unsigned timeout)
+                            char *command, unsigned timeout)
 {
     gsm_clear_buffer(s);
     write_string(GSM_UART, command);
@@ -120,7 +116,7 @@ void gsm_pwr_on(void)
 int gsm_pwr_off(GsmState *s)
 {
     // There are two options for powering down. The first is by toggling the
-    //  powerkey, and the second is by issuing a software command. We use the
+    // powerkey, and the second is by issuing a software command. We use the
     // latter approach here.
     int err = gsm_send_command(s, GSM_PWR_DOWN, "AT+QPOWD=1\r", GSM_TIMEOUT);
     delay_ms(1000);
@@ -128,7 +124,7 @@ int gsm_pwr_off(GsmState *s)
     return err;
 }
 
-/* Sets the HTTP url to send data to. */
+/* Set the HTTP url to which the GSM sends data. */
 static int gsm_set_http_url(GsmState *s, const char *url) {
 
     int len = strlen(url);
@@ -195,16 +191,19 @@ int gsm_init(GsmState *s)
         return -2;
     delay_ms(200);
 
+    // Set APN.
     char msg[MAX_STR_LEN];
     sprintf(msg, "AT+QICSGP=1,1,\"%s\",\"\",\"\",1\r", apn);
     if (gsm_send_command(s, GSM_OK, msg, GSM_TIMEOUT))
         return -3;
     delay_ms(200);
 
+    // Bring up network connection.
     if (gsm_send_command(s, GSM_OK, "AT+QIACT=1\r", GSM_TIMEOUT))
         return -4;
     delay_ms(5000);
 
+    // Set HTTP URL.
     if (gsm_set_http_url(s, post_domain_name))
         return -5;
     delay_ms(200);

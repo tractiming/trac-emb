@@ -5,12 +5,11 @@
 
 #define NUM_SPLITS 6
 #define NEXT_SPLIT_INDX(i) ((i+1) % NUM_SPLITS)
-#define BUF_LEN1 20
+#define BUF_LEN1 10
 #define BUF_LEN2 200
 #define NEXT_BUF1_INDX(i) ((i+1) % BUF_LEN1)
 #define NEXT_BUF2_INDX(i) ((i+1) % BUF_LEN2)
-#define MAX_MSG_LEN 250
-#define BOOT_WAIT 100
+#define BOOT_WAIT 100   // Number of seconds to wait for Alien to turn on.
 
 typedef struct
 {
@@ -43,11 +42,5 @@ void update_splits(SplitQueue *, LineBuffer *);
 void rfid_init(void);
 int get_next_split_msg(SplitQueue *, const char *, char *);
 char *strtok_r (char *, const char *, char **);
-
-
-//int queue_is_empty(SplitQueue *);
-//void pop_split_from_queue(SplitQueue *, char *);
-//void get_split_msg(Split *, char *);
-//void post_splits_to_server(GsmState *, SplitQueue *, const char*);
 
 #endif	/* RFID_H */
