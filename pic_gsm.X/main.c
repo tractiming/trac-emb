@@ -65,7 +65,6 @@ void __ISR(GSM_UART_VEC, IPL6SOFT) IntGSMUartHandler(void) {
 
     char data = UARTGetDataByte(GSM_UART);
     gsm_add_to_buffer(&gsm_state, data);
-    put_character(RFID_UART, data);
 
     // Clear the RX interrupt flag.
     INTClearFlag(INT_SOURCE_UART_RX(GSM_UART));
@@ -86,8 +85,7 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
 
       // Add the next character to the serial buffer.
       char data = UARTGetDataByte(RFID_UART);
-      put_character(GSM_UART, data);
-      //rfid_add_to_buffer(&rfid_line_buffer, data);
+      rfid_add_to_buffer(&rfid_line_buffer, data);
 
       // Clear the RX interrupt flag.
       INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));

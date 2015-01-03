@@ -1,8 +1,6 @@
 #ifndef RFID_H
 #define RFID_H
 
-#include "gsm.h"
-
 #define NUM_SPLITS 6
 #define NEXT_SPLIT_INDX(i) ((i+1) % NUM_SPLITS)
 #define BUF_LEN1 10
