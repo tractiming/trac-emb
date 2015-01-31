@@ -4,7 +4,7 @@
 #include "gsm.h"
 #include "rfid.h"
 
-#define FULL_DEMO
+//#define FULL_DEMO
 
 // Unique reader id for this device.
 const char reader_id[] = "A1010"; 
@@ -18,25 +18,30 @@ int main(void) {
     GSM_LED = 0; RFID_LED = 0;
 
     // Configure interrupts for shutdown and uart communication.
-    setup_shutdown_int();
+    //setup_shutdown_int();
     gsm_init_uart();
     rfid_init_uart();
     INTEnableSystemMultiVectoredInt();
     delay_ms(5000);
+    //GSM_LED = 1;
 
     // Initialize the GSM module. On failure, wait to be reset.
-    if (gsm_init(&gsm_state))
-        while(1);
-    GSM_LED = 1;
+    //if (gsm_init(&gsm_state)){
+    //    GSM_LED = 0;
+    //    while(1);
+    //}
 
     // Inititialize the rfid reader.
     //rfid_init();
-    RFID_LED = 1;
+    //RFID_LED = 1;
+    GSM_LED = 1;
+    while (1);
 
     char post_msg[MAX_STR_LEN];
+    //gsm_http_post(&gsm_state, "hello");
     while (1) {
 
-#ifdef FULL_DEMO
+//#ifdef FULL_DEMO
 
         // Parse any new splits.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
@@ -44,13 +49,15 @@ int main(void) {
         // Post any new data to the server.
         while (get_next_split_msg(&rfid_split_queue, reader_id, post_msg))
         {
-            gsm_http_post(&gsm_state, post_msg);
+            RFID_LED = 0;
+            //gsm_http_post(&gsm_state, post_msg);
             delay_ms(1000);
+            RFID_LED = 1;
         }
 
         delay_ms(150);
 
-#endif
+//#endif
 
     };
 
@@ -65,6 +72,7 @@ void __ISR(GSM_UART_VEC, IPL6SOFT) IntGSMUartHandler(void) {
 
     char data = UARTGetDataByte(GSM_UART);
     gsm_add_to_buffer(&gsm_state, data);
+    put_character(RFID_UART, data);
 
     // Clear the RX interrupt flag.
     INTClearFlag(INT_SOURCE_UART_RX(GSM_UART));
@@ -85,7 +93,8 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
 
       // Add the next character to the serial buffer.
       char data = UARTGetDataByte(RFID_UART);
-      rfid_add_to_buffer(&rfid_line_buffer, data);
+      put_character(GSM_UART, data);
+      //rfid_add_to_buffer(&rfid_line_buffer, data);
 
       // Clear the RX interrupt flag.
       INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));

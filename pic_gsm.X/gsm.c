@@ -168,6 +168,7 @@ int gsm_init(GsmState *s)
 {
     // Pull powerkey low to turn on module.
     gsm_pwr_on();
+    return 0;
 
     // Reset buffer and state.
     gsm_clear_buffer(s);
@@ -186,10 +187,12 @@ int gsm_init(GsmState *s)
             return -1;
     }
     delay_ms(1500);
+    GSM_LED = 1;
     
     if (gsm_send_command(s, GSM_OK, "AT+QHTTPCFG=\"contextid\",1\r", GSM_TIMEOUT))
         return -2;
     delay_ms(200);
+    
 
     // Set APN.
     char msg[MAX_STR_LEN];
@@ -197,6 +200,7 @@ int gsm_init(GsmState *s)
     if (gsm_send_command(s, GSM_OK, msg, GSM_TIMEOUT))
         return -3;
     delay_ms(200);
+    
 
     // Bring up network connection.
     if (gsm_send_command(s, GSM_OK, "AT+QIACT=1\r", GSM_TIMEOUT))
