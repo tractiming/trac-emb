@@ -35,21 +35,33 @@ int main(void) {
     delay_ms(5000);
 
     char post_msg[MAX_STR_LEN];
+    //int send_ok;
     while (1) {
 
         // Parse any new splits.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
-
+        
         // Post any new data to the server.
-        while (get_next_split_msg(&rfid_split_queue, reader_id, post_msg))
+        if (get_update_msg(&rfid_split_queue, reader_id, post_msg))
         {
             GSM_LED = 0;
             gsm_http_post(&gsm_state, post_msg);
-            delay_ms(1000);
+            delay_ms(2750);
             GSM_LED = 1;
         }
 
-        delay_ms(150);
+        
+        //while (get_next_split_msg(&rfid_split_queue, reader_id, post_msg))
+        //{
+        //    GSM_LED = 0;
+        //    send_ok = gsm_http_post(&gsm_state, post_msg);
+        //    delay_ms(2500);
+        //    //if (!send_ok)
+        //    //    delay_ms(5000);
+        //    GSM_LED = 1;
+        //}
+
+        //delay_ms(150);
 
     };
 

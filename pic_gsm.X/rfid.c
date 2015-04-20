@@ -32,6 +32,29 @@ static void pop_split_from_queue(SplitQueue *q, char *dest)
     q->tail = NEXT_SPLIT_INDX(q->tail);
 }
 
+static int pop_all_from_queue(SplitQueue *q, char *dest)
+{
+    int split_count = 0;
+
+    strcpy(dest, "[");
+    while ((!queue_is_empty(q)) && (split_count<MAX_MSG_SPLITS))
+    {
+        strcat(dest, "['");
+        strcat(dest, q->queue[q->tail].tag_id);
+        strcat(dest, "','");
+        strcat(dest, q->queue[q->tail].time);
+        //strcat(dest, "','");
+        //strcat(dest, q->queue[q->tail].ant);
+        strcat(dest, "'],");
+
+        split_count++;
+        q->tail = NEXT_SPLIT_INDX(q->tail);
+    }
+    strcat(dest, "]");
+    return split_count;
+
+}
+
 static int parse_split_data(char *data, Split *s)
 {
     char *tok1, *tok2;
@@ -102,11 +125,14 @@ void rfid_add_to_buffer(LineBuffer *b, char c)
     else if ((c < 32) || (c > 127))
     {}
     
-    else
+    else// ((c>32) && (c<127))
     {
         b->buf[b->head][b->indx] = c;
         b->indx = NEXT_BUF2_INDX(b->indx);
     }
+
+    //else
+    //{}
 }
 
 void update_splits(SplitQueue *q, LineBuffer *b)
@@ -132,9 +158,26 @@ int get_next_split_msg(SplitQueue *q, const char *r_id, char *msg)
 
 }
 
+int get_update_msg(SplitQueue *q, const char *r_id, char *msg)
+{
+    char temp[MAX_MSG_LEN];
+    int n = pop_all_from_queue(q, temp);
+    sprintf(msg, "r=%s&s=%s", r_id, temp);
+    return n;
+}
+
 void rfid_init(void)
 {
-    delay_ms(BOOT_WAIT*1000);
+    int j;
+    WriteCoreTimer(0);
+    while (ReadCoreTimer() < (SYS_FREQ/2000)*BOOT_WAIT*1000)
+    {
+        RFID_LED = 1;
+        for (j=0; j<100000; j++);
+        RFID_LED = 0;
+        for (j=0; j<100000; j++);
+    }
+    //delay_ms(BOOT_WAIT*1000);
     clear_queue(&rfid_split_queue);
     clear_buffer(&rfid_line_buffer);
 }

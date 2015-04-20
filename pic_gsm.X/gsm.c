@@ -152,12 +152,12 @@ int gsm_http_post(GsmState *s, char* data) {
     // We do not care about the read time for right now. Note that the GSM
     // timeout is given in milliseconds.
     int latency = GSM_TIMEOUT/2;
-    sprintf(msg, "AT+QHTTPPOST=%i,%i,5\r", len, latency/1000);
+    sprintf(msg, "AT+QHTTPPOST=%i,%i,1\r", len, latency/1000);
 
     if (gsm_send_command(s, GSM_CONNECT, msg, GSM_TIMEOUT))
         return -1;
 
-    delay_ms(150); // This pause is really important!
+    delay_ms(250); // This pause is really important!
 
     return gsm_send_command(s, GSM_OK, data, GSM_TIMEOUT);
 }
