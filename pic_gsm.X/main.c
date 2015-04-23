@@ -46,22 +46,10 @@ int main(void) {
         {
             GSM_LED = 0;
             gsm_http_post(&gsm_state, post_msg);
-            delay_ms(2750);
             GSM_LED = 1;
         }
-
         
-        //while (get_next_split_msg(&rfid_split_queue, reader_id, post_msg))
-        //{
-        //    GSM_LED = 0;
-        //    send_ok = gsm_http_post(&gsm_state, post_msg);
-        //    delay_ms(2500);
-        //    //if (!send_ok)
-        //    //    delay_ms(5000);
-        //    GSM_LED = 1;
-        //}
-
-        //delay_ms(150);
+        delay_ms(2750);
 
     };
 
@@ -125,3 +113,15 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
 
     mINT3ClearIntFlag();
 }
+
+// Old update loop.
+//while (get_next_split_msg(&rfid_split_queue, reader_id, post_msg))
+//{
+//    GSM_LED = 0;
+//    send_ok = gsm_http_post(&gsm_state, post_msg);
+//    delay_ms(2500);
+//    //if (!send_ok)
+//    //    delay_ms(5000);
+//    GSM_LED = 1;
+//}
+//delay_ms(150);

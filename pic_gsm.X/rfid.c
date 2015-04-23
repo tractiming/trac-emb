@@ -172,10 +172,10 @@ void rfid_init(void)
     WriteCoreTimer(0);
     while (ReadCoreTimer() < (SYS_FREQ/2000)*BOOT_WAIT*1000)
     {
-        RFID_LED = 1;
-        for (j=0; j<100000; j++);
-        RFID_LED = 0;
-        for (j=0; j<100000; j++);
+        GSM_LED = 1;
+        for (j=0; j<2000000; j++);
+        GSM_LED = 0;
+        for (j=0; j<2000000; j++);
     }
     //delay_ms(BOOT_WAIT*1000);
     clear_queue(&rfid_split_queue);
