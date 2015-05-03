@@ -66,6 +66,9 @@ static void gsm_update_state(GsmState *s)
     else if (compare_response(s, "DOWN"))
         s->resp = GSM_PWR_DOWN;
 
+    else if (compare_response(s, "GET:"))
+        s->resp = GSM_GET;
+
 }
 
 /* Wait for the GSM to give response. Timeout if not received. */
@@ -121,6 +124,16 @@ int gsm_pwr_off(GsmState *s)
     delay_ms(1000);
     gsm_on = 0;
     return err;
+}
+
+/* GSM hardware shutdown. */
+void gsm_pwr_off_hard(void)
+{
+    delay_ms(250);
+    POWERKEY = 1;
+    delay_ms(1000);
+    POWERKEY = 0;
+    delay_ms(2000);
 }
 
 /* Set the HTTP url to which the GSM sends data. */
@@ -208,4 +221,27 @@ int gsm_init(GsmState *s)
     delay_ms(200);
 
     return 0;
+}
+
+int gsm_set_real_time(GsmState *s, char *ctime)
+{
+    char str[100];
+    char yr[2], day[2], mon[2], hr[2], min[2], sec[2];
+
+    gsm_send_command(s, GSM_GET, "AT+QHTTPGET\r", GSM_TIMEOUT);
+    delay_ms(500);
+
+    gsm_send_command(s, GSM_OK, "AT+QHTTPREAD\r", GSM_TIMEOUT);
+    delay_ms(1000);
+
+    strncpy(str, s->buf, (s->indx+1));
+    sscanf(str, "%*[^\"]\"%*2%2[^-]-%2[^-]-%2s %2[^:]:%2[^:]:%2[^+]", yr, mon, day, hr, min, sec);
+    sprintf(ctime, "%s/%s/%s,%s:%s:%s+00\n", yr, mon, day, hr, min, sec);
+
+    gsm_http_post(s, str);
+    gsm_http_post(s, ctime);
+
+    return 0;
+
+
 }

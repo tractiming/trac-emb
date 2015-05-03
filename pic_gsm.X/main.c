@@ -24,17 +24,31 @@ int main(void) {
     //GSM_LED = 1;
 
     // Initialize the GSM module. On failure, wait to be reset.
-    if (gsm_init(&gsm_state)){
-        GSM_LED = 0;
-        while(1);
+    int gsm_not_init = 1;
+    while (gsm_not_init)
+    {
+        gsm_not_init = gsm_init(&gsm_state);
+        if (gsm_not_init)
+        {
+            gsm_pwr_off(&gsm_state);
+            delay_ms(3000);
+        }
+
     }
+
+    //char ctime[50];
+    //gsm_set_real_time(&gsm_state, ctime);
+    //if (gsm_init(&gsm_state)){
+    //    GSM_LED = 0;
+    //    while(1);
+    //}
 
     // Inititialize the rfid reader.
     rfid_init();
     GSM_LED = 1;
     delay_ms(5000);
 
-    char post_msg[MAX_STR_LEN];
+    char post_msg[MAX_MSG_LEN];
     //int send_ok;
     while (1) {
 
@@ -103,7 +117,8 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
     // Send shutoff signal to GSM.
     GSM_LED = 0;
     if (gsm_on)
-        gsm_pwr_off(&gsm_state);
+        gsm_pwr_off_hard();
+        //gsm_pwr_off(&gsm_state);
 
     // Send KILL signal to timer. (Not implemented.)
 

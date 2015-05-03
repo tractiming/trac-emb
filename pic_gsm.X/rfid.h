@@ -8,8 +8,8 @@
 #define NEXT_BUF1_INDX(i) ((i+1) % BUF_LEN1)
 #define NEXT_BUF2_INDX(i) ((i+1) % BUF_LEN2)
 #define BOOT_WAIT 100   // Number of seconds to wait for Alien to turn on.
-#define MAX_MSG_SPLITS 5
-#define MAX_MSG_LEN (65*MAX_MSG_SPLITS+15)
+#define MAX_MSG_SPLITS 10
+#define MAX_MSG_LEN 750
 
 typedef struct
 {
