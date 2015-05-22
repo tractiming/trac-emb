@@ -3,7 +3,7 @@
 #include "comm.h"
 #include "rfid.h"
 #include "gsm.h"
-#include <plib.h>
+//#include <plib.h>
 
 #define MAX_MESSAGE_LENGTH 300
 const char reader_id[] = "A1010"; // Unique reader id for this device.
@@ -81,6 +81,7 @@ void __ISR(SERIAL_UART_VEC, IPL7SOFT) IntSerialUartHandler(void) {
 int main(void) {
 
     char message[MAX_MESSAGE_LENGTH];
+    char data2[] = "AT QHTTPREAD\r\r\nCONNECT\r\n[\"2015-05-06 03:09:07.700450 00:00\"]\r\n\r\n\r\n QHTTPREAD: 0\r\n";
 
     NU32_Startup();
 
@@ -93,11 +94,62 @@ int main(void) {
     //LATDbits.LATD0 = 0;
     //delay_ms(10000);
 
+    //char s[250];
+    //strcpy(s, data2);
+
+    char *s = data2;
+    int sv = 0, j = 0;
+    char tms[50];
+    while (*s)
+    {
+        if (*s == ']')
+            sv = 0;
+
+        if (sv)
+            tms[j++] = *s;
+
+        if (*s == '[')
+            sv = 1;
+
+        s++;
+    }
+    tms[j] = '\0';
+
+    NU32_WriteUART1(tms);
+    NU32_WriteUART1("\r\n");
+
+    int yr, mon, day, hr, min, sec;
+    sscanf(tms, "\"%d-%2d-%2d %2d:%2d:%2d\"", &yr, &mon, &day, &hr, &min, &sec);
+
+    char tmp[20];
+    sprintf(tmp, "%d\n", yr);
+    NU32_WriteUART1(tmp);
+
+    sprintf(tmp, "%d\n", mon);
+    NU32_WriteUART1(tmp);
+
+    char ft[100];
+    sprintf(ft, "%d/%02d/%02d %02d:%02d:%02d", yr, mon, day, hr, min, sec);
+    NU32_WriteUART1(ft);
+    NU32_WriteUART1("\r\n");
+
+    
+
+    while(1)
+    {
+        NU32LED1 = 1;
+        NU32LED2 = 0;
+        delay_ms(500);
+        NU32LED1 = 0;
+        NU32LED2 = 1;
+        delay_ms(500);
+    }
+
     // Set up serial communication.
-    NU32_EnableUART1Interrupt();
-    U2STAbits.URXEN = 1;
-    U2STAbits.UTXEN = 1;
-    init_uc15_uart();
+    //NU32_EnableUART1Interrupt();
+    //U2STAbits.URXEN = 1;
+    //U2STAbits.UTXEN = 1;
+    //init_uc15_uart();
 
 #ifdef FULL_DEMO
     U5STAbits.URXEN = 1;
@@ -125,7 +177,7 @@ int main(void) {
     gsm_http_post(&gsm_state, "testing");
 #endif
 
-    while(1) {
+    //while(1) {
 #ifdef FULL_DEMO
         //if (!NU32USER) {
         //    delay_ms(250);
@@ -158,7 +210,7 @@ int main(void) {
         delay_ms(150);
 #endif
 
-    }
+    //}
     return 0;
 }
 

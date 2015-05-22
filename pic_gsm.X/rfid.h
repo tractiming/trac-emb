@@ -43,5 +43,6 @@ void rfid_init(void);
 int get_next_split_msg(SplitQueue *, const char *, char *);
 char *strtok_r (char *, const char *, char **);
 int get_update_msg(SplitQueue *, const char *, char *);
+void rfid_set_time(const char *);
 
 #endif	/* RFID_H */

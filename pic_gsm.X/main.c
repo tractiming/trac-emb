@@ -36,17 +36,15 @@ int main(void) {
 
     }
 
-    //char ctime[50];
-    //gsm_set_real_time(&gsm_state, ctime);
-    //if (gsm_init(&gsm_state)){
-    //    GSM_LED = 0;
-    //    while(1);
-    //}
-
     // Inititialize the rfid reader.
     rfid_init();
     GSM_LED = 1;
     delay_ms(5000);
+
+    // Sync the reader time with the server time.
+    char ctime[50];
+    gsm_get_time(&gsm_state, ctime);
+    rfid_set_time(ctime);
 
     char post_msg[MAX_MSG_LEN];
     //int send_ok;

@@ -1,7 +1,7 @@
 #ifndef GSM_H
 #define	GSM_H
 
-#define GSM_BUFFER_LEN 25
+#define GSM_BUFFER_LEN 100
 #define GSM_TIMEOUT 10000
 #define GSM_MAX_HTTP_LEN 1000
 #define NEXT_GSM_INDX(i) ((i+1) % GSM_BUFFER_LEN)
@@ -38,6 +38,6 @@ int gsm_http_post(GsmState *, char *);
 void gsm_pwr_on(void);
 int gsm_pwr_off(GsmState *);
 void gsm_pwr_off_hard(void);
-int gsm_set_real_time(GsmState *, char*);
+int gsm_get_time(GsmState *, char*);
 
 #endif	/* GSM_H */

@@ -223,25 +223,39 @@ int gsm_init(GsmState *s)
     return 0;
 }
 
-int gsm_set_real_time(GsmState *s, char *ctime)
+int gsm_get_time(GsmState *s, char *ctime)
 {
-    char str[100];
-    char yr[2], day[2], mon[2], hr[2], min[2], sec[2];
-
+    // Query the server for the current time.
+    char str[GSM_BUFFER_LEN+1];
     gsm_send_command(s, GSM_GET, "AT+QHTTPGET\r", GSM_TIMEOUT);
-    delay_ms(500);
-
+    delay_ms(100);
     gsm_send_command(s, GSM_OK, "AT+QHTTPREAD\r", GSM_TIMEOUT);
-    delay_ms(1000);
-
+    delay_ms(100);
     strncpy(str, s->buf, (s->indx+1));
-    sscanf(str, "%*[^\"]\"%*2%2[^-]-%2[^-]-%2s %2[^:]:%2[^:]:%2[^+]", yr, mon, day, hr, min, sec);
-    sprintf(ctime, "%s/%s/%s,%s:%s:%s+00\n", yr, mon, day, hr, min, sec);
 
-    gsm_http_post(s, str);
-    gsm_http_post(s, ctime);
+    // Parse the response for the time.
+    char *ts = str;
+    int sv=0, j=0;
+    char tms[50];
+    while (*ts)
+    {
+        if (*ts == ']')
+            sv = 0;
+
+        if (sv)
+            tms[j++] = *ts;
+
+        if (*ts == '[')
+            sv = 1;
+
+        ts++;
+    }
+    tms[j] = '\0';
+
+    int yr, mon, day, hr, min, sec;
+    sscanf(tms, "\"%d-%2d-%2d %2d:%2d:%2d\"", &yr, &mon, &day, &hr, &min, &sec);
+    sprintf(ctime, "%d/%02d/%02d %02d:%02d:%02d", yr, mon, day, hr, min, sec);
 
     return 0;
-
 
 }

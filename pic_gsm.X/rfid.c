@@ -181,3 +181,12 @@ void rfid_init(void)
     clear_queue(&rfid_split_queue);
     clear_buffer(&rfid_line_buffer);
 }
+
+void rfid_set_time(const char *ctime)
+{
+    // Time should be in YYYY/MM/DD hh:mm:ss format.
+    char tmp[100];
+    sprintf(tmp, "Time=%s\r", ctime);
+    write_string(RFID_UART, tmp);
+    delay_ms(2000);
+}
