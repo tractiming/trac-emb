@@ -12,8 +12,12 @@ int main(void) {
     // Configure PIC and I/O.
     CFGCONbits.JTAGEN = 0;
     SYSTEMConfigPerformance(SYS_FREQ);
-    setup_pins();
+    setup_pins(); 
     GSM_LED = 0; RFID_LED = 0;
+    
+    //PWM Setup
+    set_buzzer_freq(2000); //Buzzer freq in Hz
+    set_buzzer_duty(0); //Turn off buzzer
 
     // Configure interrupts for shutdown and uart communication.
     setup_shutdown_int();
@@ -56,8 +60,10 @@ int main(void) {
         // Post any new data to the server.
         if (get_update_msg(&rfid_split_queue, reader_id, post_msg))
         {
+            set_buzzer_duty(50);
             GSM_LED = 0;
             gsm_http_post(&gsm_state, post_msg);
+            set_buzzer_duty(0);
             GSM_LED = 1;
         }
         
@@ -127,14 +133,3 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
     mINT3ClearIntFlag();
 }
 
-// Old update loop.
-//while (get_next_split_msg(&rfid_split_queue, reader_id, post_msg))
-//{
-//    GSM_LED = 0;
-//    send_ok = gsm_http_post(&gsm_state, post_msg);
-//    delay_ms(2500);
-//    //if (!send_ok)
-//    //    delay_ms(5000);
-//    GSM_LED = 1;
-//}
-//delay_ms(150);
