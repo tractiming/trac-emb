@@ -8,16 +8,12 @@
 const char reader_id[] = "A1010"; 
 
 int main(void) {
-
+    
     // Configure PIC and I/O.
     CFGCONbits.JTAGEN = 0;
     SYSTEMConfigPerformance(SYS_FREQ);
-    setup_pins(); 
+    setup_pins();
     GSM_LED = 0; RFID_LED = 0;
-    
-    //PWM Setup
-    set_buzzer_freq(2000); //Buzzer freq in Hz
-    set_buzzer_duty(0); //Turn off buzzer
 
     // Configure interrupts for shutdown and uart communication.
     setup_shutdown_int();
@@ -51,19 +47,18 @@ int main(void) {
     rfid_set_time(ctime);
 
     char post_msg[MAX_MSG_LEN];
-    //int send_ok;
+    //int send_ok;        
     while (1) {
-
+                        
         // Parse any new splits.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
         
         // Post any new data to the server.
         if (get_update_msg(&rfid_split_queue, reader_id, post_msg))
         {
-            set_buzzer_duty(50);
             GSM_LED = 0;
             gsm_http_post(&gsm_state, post_msg);
-            set_buzzer_duty(0);
+            buzzer_beep();
             GSM_LED = 1;
         }
         
@@ -132,4 +127,3 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
 
     mINT3ClearIntFlag();
 }
-

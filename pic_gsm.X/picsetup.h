@@ -46,7 +46,8 @@
 void setup_pins(void);
 void pic_reset(void);
 void setup_shutdown_int(void);
-void set_buzzer_freq(int freq);
-int set_buzzer_duty(int percent);
+void set_buzzer_freq(double freq);
+int  set_buzzer_duty(double percent);
+void buzzer_beep(void);
 
 #endif	/* PICSETUP_H */

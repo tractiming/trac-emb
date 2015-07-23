@@ -27,14 +27,19 @@ void setup_pins(void) {
     INT3Rbits.INT3R = 0b0001;
     TRISBbits.TRISB5 = 1;
     
-    // Setting up Timer2 and OC1 for PWM 
-    T2CONbits.TCKPS = 0b010;     // Timer2 prescaler N=4 (1:4)
-	PR2 = 4999;              // period register
-	TMR2 = 0;                // initial TMR2 count is 0
-	OC1CONbits.OCM = 0b110;  // PWM mode without fault pin; other OC1CON bits are defaults
-	OC1RS = PR2/2;             // duty cycle = 50%
-	OC1R = PR2/2;              // initialize before turning OC1 on; afterward it is read-only
-	
+    // Setting up Timer2 and OC4 for PWM 
+    T2CONbits.TCKPS = 2;      // Timer2 prescaler N=4 (1:4)
+	PR2 = 4999;               // period register
+	TMR2 = 0;                 // initial TMR2 count is 0
+	OC4CONbits.OCM = 0b110;   // PWM mode without fault pin; other OC1CON bits are defaults
+    RPA2Rbits.RPA2R = 0b0101; // Enable OC4 on Pin 9 
+	OC4RS = 2500;             // duty cycle = 50%
+	OC4R = 2500;              // initialize before turning OC1 on; afterward it is read-only
+    
+    //Enable interrupts, JTAG
+    CFGCONbits.JTAGEN = 0; // From Elliot's code
+    INTEnableSystemMultiVectoredInt();
+    
     // Not implemented.
     // RB14 (Pin 25) is the kill signal to the shutdown timer.
     //TRISBbits.TRISB14 = 0;
@@ -55,24 +60,29 @@ void setup_shutdown_int(void) {
     mINT3IntEnable(1);
 }
 
-void set_buzzer_freq(int freq){
+void set_buzzer_freq(double freq){
     //freq is buzzer frequency in Hz, 2000 is good
     
     //Turn off Timer2, OC1
-    OC1RS = 0;
-    OC1CONbits.ON = 0;       // turn off OC1
+    OC4CONbits.ON = 0;       // turn off OC1
     T2CONbits.ON = 0;        // turn off Timer2
     
     //Adjust PR2
-    PR2 = (SYS_FREQ / 4) / freq - 1;
+    PR2 = (int)(10000000.0 / freq - 1.0);
             
     //Turn on Timer2, OC1
     T2CONbits.ON = 1;        // turn on Timer2
-	OC1CONbits.ON = 1;       // turn on OC1
-    OC1RS = 0;
+	OC4CONbits.ON = 1;       // turn on OC1
 }
 
-int set_buzzer_duty(int percent){
+int set_buzzer_duty(double percent){
     //Percent should be a int between 0 and 100
-    OC1RS = percent*PR2/100; 
+    OC4RS = (int)(percent*((double)PR2)/100.0); 
+}
+
+void buzzer_beep(void){
+    set_buzzer_duty(50.0);
+    set_buzzer_freq(6000.0);
+    delay_ms(5);
+    set_buzzer_duty(0.0);
 }
