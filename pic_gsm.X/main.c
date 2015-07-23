@@ -58,7 +58,6 @@ int main(void) {
         {
             GSM_LED = 0;
             gsm_http_post(&gsm_state, post_msg);
-            buzzer_beep();
             GSM_LED = 1;
         }
         
@@ -98,7 +97,7 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
       // Add the next character to the serial buffer.
       char data = UARTGetDataByte(RFID_UART);
       rfid_add_to_buffer(&rfid_line_buffer, data);
-
+      buzzer_beep();
       // Clear the RX interrupt flag.
       INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));
   }
