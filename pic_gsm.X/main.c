@@ -127,3 +127,14 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
 
     mINT3ClearIntFlag();
 }
+
+// ISR for battery indicator 
+void __ISR(_EXTERNAL_1_VECTOR, IPL5AUTO) _IntHandlerExternalInterruptInstance0(void)
+{          
+    /*
+     * Insert boolean toggle for LED state
+     * 
+     */
+    
+    IFS0bits.INT1IF = 0; //Clear the interrupt flag   
+}

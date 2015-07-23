@@ -35,10 +35,15 @@ void setup_pins(void) {
     RPA2Rbits.RPA2R = 0b0101; // Enable OC4 on Pin 9 
 	OC4RS = 2500;             // duty cycle = 50%
 	OC4R = 2500;              // initialize before turning OC1 on; afterward it is read-only
-    
-    //Enable interrupts, JTAG
-    CFGCONbits.JTAGEN = 0; // From Elliot's code
-    INTEnableSystemMultiVectoredInt();
+
+    // Setting up interrupts for battery light indicator
+    // Configure INT1 Interrupt, falling edge, RA3 (pin 10)
+    INT1Rbits.INT1R = 0b0000; //Enable INT1 on Pin 10 (RA3) 
+    INTCONbits.INT1EP = 0; //INT1 triggers on falling edge
+    IPC1bits.INT1IP = 5; //Set priority (5)
+    IPC1bits.IC1IS = 2;  //Set sub priority (2)  
+    IFS0bits.INT1IF = 0; //Clear the interrupt flag
+    IEC0bits.INT1IE = 1; //Enable the interrupt 
     
     // Not implemented.
     // RB14 (Pin 25) is the kill signal to the shutdown timer.
