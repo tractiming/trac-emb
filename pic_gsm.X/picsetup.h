@@ -46,6 +46,8 @@
 void setup_pins(void);
 void pic_reset(void);
 void setup_shutdown_int(void);
+void setup_buzzer();
+void setup_battery_status();
 void set_buzzer_freq(double freq);
 int  set_buzzer_duty(double percent);
 void buzzer_beep(void);

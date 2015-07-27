@@ -79,4 +79,8 @@ void read_uart(UART_MODULE id, char * message, int max_len) {
   }
   
   message[num_bytes] = '\0';
+  
+  //Beep buzzer to indicate finish of reading data
+  buzzer_beep();
+  
 };

@@ -6,12 +6,14 @@
 
 // Unique reader id for this device.
 const char reader_id[] = "A1010"; 
+char  battery_state = 1;
 
 int main(void) {
     
     // Configure PIC and I/O.
     CFGCONbits.JTAGEN = 0;
     SYSTEMConfigPerformance(SYS_FREQ);
+    INTDisableInterrupts(); //Disable interrupts      
     setup_pins();
     GSM_LED = 0; RFID_LED = 0;
 
@@ -97,7 +99,6 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
       // Add the next character to the serial buffer.
       char data = UARTGetDataByte(RFID_UART);
       rfid_add_to_buffer(&rfid_line_buffer, data);
-      buzzer_beep();
       // Clear the RX interrupt flag.
       INTClearFlag(INT_SOURCE_UART_RX(RFID_UART));
   }
@@ -131,9 +132,37 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
 void __ISR(_EXTERNAL_1_VECTOR, IPL5AUTO) _IntHandlerExternalInterruptInstance0(void)
 {          
     /*
-     * Insert boolean toggle for LED state
-     * 
+     * Currently not used, this interrupt is triggered when battery pin drop lows
+     *      
      */
     
     IFS0bits.INT1IF = 0; //Clear the interrupt flag   
 }
+
+//ISR for power light
+void __ISR(_TIMER_4_VECTOR, IPL4AUTO) Timer4ISR(void)
+{  
+         //Check state of battery, 0 (low) means low battery
+        if (battery_state == 1){
+            
+            if (PORTAbits.RA3 == 0){
+                //Change battery state to low
+                battery_state = 0;
+            }
+            
+        }
+        
+        else {
+            //Flash Power LED        
+            //LATBINV = 0x0020; // Toggle LED
+            
+            /* 
+             * 
+             * Toggle power LED
+             * 
+             */
+        } 
+    
+    IFS0bits.T4IF = 0; // Clear the interrupt flag
+}
+

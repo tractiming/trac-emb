@@ -27,23 +27,8 @@ void setup_pins(void) {
     INT3Rbits.INT3R = 0b0001;
     TRISBbits.TRISB5 = 1;
     
-    // Setting up Timer2 and OC4 for PWM 
-    T2CONbits.TCKPS = 2;      // Timer2 prescaler N=4 (1:4)
-	PR2 = 4999;               // period register
-	TMR2 = 0;                 // initial TMR2 count is 0
-	OC4CONbits.OCM = 0b110;   // PWM mode without fault pin; other OC1CON bits are defaults
-    RPA2Rbits.RPA2R = 0b0101; // Enable OC4 on Pin 9 
-	OC4RS = 2500;             // duty cycle = 50%
-	OC4R = 2500;              // initialize before turning OC1 on; afterward it is read-only
-
-    // Setting up interrupts for battery light indicator
-    // Configure INT1 Interrupt, falling edge, RA3 (pin 10)
-    INT1Rbits.INT1R = 0b0000; //Enable INT1 on Pin 10 (RA3) 
-    INTCONbits.INT1EP = 0; //INT1 triggers on falling edge
-    IPC1bits.INT1IP = 5; //Set priority (5)
-    IPC1bits.IC1IS = 2;  //Set sub priority (2)  
-    IFS0bits.INT1IF = 0; //Clear the interrupt flag
-    IEC0bits.INT1IE = 1; //Enable the interrupt 
+    setup_buzzer();
+    setup_battery_status();
     
     // Not implemented.
     // RB14 (Pin 25) is the kill signal to the shutdown timer.
@@ -63,6 +48,43 @@ void setup_shutdown_int(void) {
     mINT3SetIntSubPriority(0);
     mINT3ClearIntFlag();
     mINT3IntEnable(1);
+}
+
+void setup_battery_status(void){
+    // Setting up interrupts for battery light indicator
+    // Configure INT1 Interrupt, falling edge, RA3 (pin 10)
+    INT1Rbits.INT1R = 0b0000; //Enable INT1 on Pin 10 (RA3) 
+    INTCONbits.INT1EP = 0; //INT1 triggers on falling edge
+    IPC1bits.INT1IP = 5; //Set priority (5)
+    IPC1bits.IC1IS = 2;  //Set sub priority (2)  
+    IFS0bits.INT1IF = 0; //Clear the interrupt flag
+    IEC0bits.INT1IE = 1; //Enable the interrupt 
+    
+    // Configure Timer 4 
+    PR4 = 39062; //Timer 4 period register (set for 4 Hz)
+    TMR4 = 0; //Initialize count to 0
+    T4CONbits.TCKPS = 0b111; //256 prescaler
+    T4CONbits.TGATE = 0; //default
+    T4CONbits.TCS = 0; //default
+    
+    // Configure Timer 4 Interrupt
+    IPC4bits.T4IP = 4; //Set priority (4)
+    IPC4bits.T4IS = 2; //Set sub priority (2)
+    IFS0bits.T4IF = 0; // Clear the interrupt flag
+    IEC0bits.T4IE = 1; //Enable the interrupt
+
+    T4CONbits.TON = 1; //Turn on Timer 4 
+}
+
+void setup_buzzer(void){
+    // Setting up Timer2 and OC4 for PWM 
+    T2CONbits.TCKPS = 2;      // Timer2 prescaler N=4 (1:4)
+	PR2 = 4999;               // period register
+	TMR2 = 0;                 // initial TMR2 count is 0
+	OC4CONbits.OCM = 0b110;   // PWM mode without fault pin; other OC1CON bits are defaults
+    RPA2Rbits.RPA2R = 0b0101; // Enable OC4 on Pin 9 
+	OC4RS = 2500;             // duty cycle = 50%
+	OC4R = 2500;              // initialize before turning OC1 on; afterward it is read-only
 }
 
 void set_buzzer_freq(double freq){
