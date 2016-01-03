@@ -7,7 +7,8 @@
 GsmState gsm_state;
 unsigned gsm_on;
 
-const char apn[] = "Internetd.gdsp";
+const char apn[] = "Internetd.gdsp"; //vodafone
+//const char apn[] = "apn.konekt.io"; //konekt
 const char post_domain_name[] = "http://trac-us.appspot.com/api/updates/";
 
 static void gsm_clear_buffer(GsmState *s)

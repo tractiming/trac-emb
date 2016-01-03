@@ -5,7 +5,7 @@
 #include "rfid.h"
 
 // Unique reader id for this device.
-const char reader_id[] = "A1010"; 
+const char reader_id[] = "A1016";
 
 int main(void) {
 
