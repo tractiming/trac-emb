@@ -7,13 +7,14 @@
 // Unique reader id for this device.
 const char reader_id[] = "A1016";
 
-int main(void) {
-
+int main(void)
+{
     // Configure PIC and I/O.
     CFGCONbits.JTAGEN = 0;
     SYSTEMConfigPerformance(SYS_FREQ);
     setup_pins();
-    GSM_LED = 0; RFID_LED = 0;
+    GSM_LED = 0;
+    RFID_LED = 0;
 
     // Configure interrupts for shutdown and uart communication.
     setup_shutdown_int();
@@ -21,7 +22,6 @@ int main(void) {
     rfid_init_uart();
     INTEnableSystemMultiVectoredInt();
     delay_ms(5000);
-    //GSM_LED = 1;
 
     // Initialize the GSM module. On failure, wait to be reset.
     int gsm_not_init = 1;
@@ -33,12 +33,11 @@ int main(void) {
             gsm_pwr_off(&gsm_state);
             delay_ms(3000);
         }
-
+    
     }
 
     // Inititialize the rfid reader.
     rfid_init();
-    GSM_LED = 1;
     delay_ms(5000);
 
     // Sync the reader time with the server time.
@@ -46,10 +45,14 @@ int main(void) {
     gsm_get_time(&gsm_state, ctime);
     rfid_set_time(ctime);
 
-    char post_msg[MAX_MSG_LEN];
-    //int send_ok;
-    while (1) {
+    // Point the posts to /api/splits.
+    gsm_cfg_split_endpoint(&gsm_state);
+    delay_ms(1000);
+    GSM_LED = 1;
 
+    char post_msg[MAX_MSG_LEN];
+    while (1)
+    {
         // Parse any new splits.
         update_splits(&rfid_split_queue, &rfid_line_buffer);
         
@@ -62,15 +65,14 @@ int main(void) {
         }
         
         delay_ms(2750);
-
     };
 
     return 0;
 }
 
 /* Interrupt for handling uart communication with gsm module. */
-void __ISR(GSM_UART_VEC, IPL6SOFT) IntGSMUartHandler(void) {
-
+void __ISR(GSM_UART_VEC, IPL6SOFT) IntGSMUartHandler(void)
+{
   // Is this an RX interrupt?
   if (INTGetFlag(INT_SOURCE_UART_RX(GSM_UART))) {
 
@@ -88,8 +90,8 @@ void __ISR(GSM_UART_VEC, IPL6SOFT) IntGSMUartHandler(void) {
 }
 
 /* Interrupt for handling uart communication with rfid reader. */
-void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
-
+void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void)
+{
   // Is this an RX interrupt?
   if (INTGetFlag(INT_SOURCE_UART_RX(RFID_UART)))
   {
@@ -110,8 +112,8 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void) {
 }
 
 /* Shutdown ISR. */
-void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
-    
+void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
+{    
     // Send shutoff signal to GSM.
     GSM_LED = 0;
     if (gsm_on)
@@ -126,15 +128,3 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void) {
 
     mINT3ClearIntFlag();
 }
-
-// Old update loop.
-//while (get_next_split_msg(&rfid_split_queue, reader_id, post_msg))
-//{
-//    GSM_LED = 0;
-//    send_ok = gsm_http_post(&gsm_state, post_msg);
-//    delay_ms(2500);
-//    //if (!send_ok)
-//    //    delay_ms(5000);
-//    GSM_LED = 1;
-//}
-//delay_ms(150);
