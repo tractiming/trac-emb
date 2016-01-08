@@ -3,7 +3,8 @@
 
 #define GSM_BUFFER_LEN 100
 #define GSM_TIMEOUT 10000
-#define GSM_MAX_HTTP_LEN 1000
+#define GSM_MAX_HTTP_LEN 3000
+#define GSM_HEADER_LEN 250
 #define NEXT_GSM_INDX(i) ((i+1) % GSM_BUFFER_LEN)
 
 typedef enum
@@ -28,7 +29,7 @@ typedef struct
 } GsmState;
 
 extern const char apn[];
-extern const char post_domain_name[];
+extern const char split_endpoint[];
 extern GsmState gsm_state;
 extern unsigned gsm_on;
 
@@ -39,5 +40,6 @@ void gsm_pwr_on(void);
 int gsm_pwr_off(GsmState *);
 void gsm_pwr_off_hard(void);
 int gsm_get_time(GsmState *, char*);
+int gsm_cfg_split_endpoint(GsmState *);
 
 #endif	/* GSM_H */

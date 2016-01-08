@@ -9,7 +9,8 @@
 #define NEXT_BUF2_INDX(i) ((i+1) % BUF_LEN2)
 #define BOOT_WAIT 130   // Number of seconds to wait for Alien to turn on.
 #define MAX_MSG_SPLITS 10
-#define MAX_MSG_LEN 750
+#define MAX_SPLIT_LEN 200
+#define MAX_MSG_LEN (MAX_MSG_SPLITS*MAX_SPLIT_LEN+10)
 
 typedef struct
 {
@@ -40,7 +41,6 @@ extern LineBuffer rfid_line_buffer;
 void rfid_add_to_buffer(LineBuffer *, char);
 void update_splits(SplitQueue *, LineBuffer *);
 void rfid_init(void);
-int get_next_split_msg(SplitQueue *, const char *, char *);
 char *strtok_r (char *, const char *, char **);
 int get_update_msg(SplitQueue *, const char *, char *);
 void rfid_set_time(const char *);

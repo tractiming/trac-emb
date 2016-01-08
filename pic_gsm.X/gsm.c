@@ -7,9 +7,20 @@
 GsmState gsm_state;
 unsigned gsm_on;
 
-const char apn[] = "Internetd.gdsp"; //vodafone
-//const char apn[] = "apn.konekt.io"; //konekt
-const char post_domain_name[] = "http://trac-us.appspot.com/api/updates/";
+//const char apn[] = "Internetd.gdsp"; //vodafone
+const char apn[] = "apn.konekt.io"; //konekt
+const char split_endpoint[] = "https://trac-us.appspot.com/api/splits/";
+const char time_endpoint[] = "https://trac-us.appspot.com/api/updates/";
+
+const char http_header[] = "POST /api/splits/ HTTP/1.1\r\n"
+                           "Host: trac-us.appspot.com\r\n"
+                           "Authorization: Bearer rwtOjDavSaqaBqp5J79tNVdwj96Zoe\r\n"
+                           "Accept: */*\r\n"
+                           "User-Agent: QUECTEL_MODULE\r\n"
+                           "Connection: Keep-Alive\r\n"
+                           "Content-Type: application/json\r\n"
+                           "Content-Length: %d\r\n\r\n";
+char post_content[GSM_HEADER_LEN+GSM_MAX_HTTP_LEN];
 
 static void gsm_clear_buffer(GsmState *s)
 {
@@ -152,12 +163,34 @@ static int gsm_set_http_url(GsmState *s, const char *url) {
     return gsm_wait_for_response(s, GSM_OK, GSM_TIMEOUT);
 }
 
+/* Configure an SSL context for making HTTPS requests. */
+static int gsm_cfg_ssl(GsmState *s)
+{
+    if (gsm_send_command(
+            s, GSM_OK, "AT+QHTTPCFG=\"sslctxid\",1\r", GSM_TIMEOUT) ||
+        gsm_send_command(
+            s, GSM_OK, "AT+QSSLCFG=\"sslversion\",1,1\r", GSM_TIMEOUT) ||
+        gsm_send_command(
+            s, GSM_OK, "AT+QSSLCFG=\"ciphersuite\",1,0X0005\r", GSM_TIMEOUT) ||
+        gsm_send_command(
+            s, GSM_OK, "AT+QSSLCFG=\"seclevel\",1,0\r", GSM_TIMEOUT))
+    {
+        return -1;
+    }
+    delay_ms(200);
+    return 0;
+}
+
 /* Sends an HTTP POST request to the server. This assumes the http url is set.*/
 int gsm_http_post(GsmState *s, char* data) {
 
-    int len = strlen(data);
-    if (len > GSM_MAX_HTTP_LEN)
+    int len_data = strlen(data);
+    if (len_data > GSM_MAX_HTTP_LEN)
         return -1;
+
+    // Add the content length to the HTTP header. Combine header with data.
+    sprintf(post_content, http_header, len_data);
+    strcat(post_content, data);
 
     char msg[100];
     // Note that the timeout for the message send needs to be less than or equal
@@ -166,14 +199,30 @@ int gsm_http_post(GsmState *s, char* data) {
     // We do not care about the read time for right now. Note that the GSM
     // timeout is given in milliseconds.
     int latency = GSM_TIMEOUT/2;
-    sprintf(msg, "AT+QHTTPPOST=%i,%i,1\r", len, latency/1000);
+    int len_total = strlen(post_content);
+    sprintf(msg, "AT+QHTTPPOST=%i,%i,1\r", len_total, latency/1000);
 
     if (gsm_send_command(s, GSM_CONNECT, msg, GSM_TIMEOUT))
         return -1;
 
     delay_ms(250); // This pause is really important!
 
-    return gsm_send_command(s, GSM_OK, data, GSM_TIMEOUT);
+    return gsm_send_command(s, GSM_OK, post_content, GSM_TIMEOUT);
+}
+
+/* Set up HTTP header and splits url. */
+int gsm_cfg_split_endpoint(GsmState *s)
+{
+    if (gsm_send_command(s, GSM_OK, "AT+QHTTPCFG=\"requestheader\",1\r",
+                         GSM_TIMEOUT))
+        return -1;
+    delay_ms(200);
+
+    if (gsm_set_http_url(s, split_endpoint))
+        return -1;
+    delay_ms(200);
+
+    return 0;
 }
 
 /* Initialize GSM module. */
@@ -216,8 +265,7 @@ int gsm_init(GsmState *s)
         return -4;
     delay_ms(5000);
 
-    // Set HTTP URL.
-    if (gsm_set_http_url(s, post_domain_name))
+    if (gsm_cfg_ssl(s))
         return -5;
     delay_ms(200);
 
@@ -226,6 +274,10 @@ int gsm_init(GsmState *s)
 
 int gsm_get_time(GsmState *s, char *ctime)
 {
+    if (gsm_set_http_url(s, time_endpoint))
+        return -1;
+    delay_ms(250);
+
     // Query the server for the current time.
     char str[GSM_BUFFER_LEN+1];
     gsm_send_command(s, GSM_GET, "AT+QHTTPGET\r", GSM_TIMEOUT);

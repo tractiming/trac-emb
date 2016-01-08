@@ -7,6 +7,10 @@
 SplitQueue rfid_split_queue;
 LineBuffer rfid_line_buffer;
 
+const char split_json[] = "{\"tag\": \"%s\", \"time\": \"%s\", "
+                          "\"reader\": \"%s\", \"sessions\": [], "
+                          "\"athlete\": null}";
+
 static void clear_queue(SplitQueue *q)
 {
     q->head = 0;
@@ -16,43 +20,6 @@ static void clear_queue(SplitQueue *q)
 static int queue_is_empty(SplitQueue *q)
 {
     return ((q->head) == (q->tail));
-}
-
-static void get_split_msg(Split *s, char *str)
-{
-    sprintf(str, "id=%s&time=%s&ant=%s", s->tag_id, s->time, s->ant);
-}
-
-static void pop_split_from_queue(SplitQueue *q, char *dest)
-{
-    if (queue_is_empty(q))
-        return;
-
-    get_split_msg(&(q->queue[q->tail]), dest);
-    q->tail = NEXT_SPLIT_INDX(q->tail);
-}
-
-static int pop_all_from_queue(SplitQueue *q, char *dest)
-{
-    int split_count = 0;
-
-    strcpy(dest, "[");
-    while ((!queue_is_empty(q)) && (split_count<MAX_MSG_SPLITS))
-    {
-        strcat(dest, "['");
-        strcat(dest, q->queue[q->tail].tag_id);
-        strcat(dest, "','");
-        strcat(dest, q->queue[q->tail].time);
-        //strcat(dest, "','");
-        //strcat(dest, q->queue[q->tail].ant);
-        strcat(dest, "'],");
-
-        split_count++;
-        q->tail = NEXT_SPLIT_INDX(q->tail);
-    }
-    strcat(dest, "]");
-    return split_count;
-
 }
 
 static int parse_split_data(char *data, Split *s)
@@ -67,7 +34,7 @@ static int parse_split_data(char *data, Split *s)
     {
         if (strstr(tok1, "Tag"))
         {
-            tok2 = (char *) strtok_r(tok1, ":", &end_tok);
+            tok2 = (char *)strtok_r(tok1, ":", &end_tok);
             tok2 = (char *)strtok_r(NULL, "\0", &end_tok);
             strcpy(s->tag_id, tok2);
             tag = 1;
@@ -125,14 +92,12 @@ void rfid_add_to_buffer(LineBuffer *b, char c)
     else if ((c < 32) || (c > 127))
     {}
     
-    else// ((c>32) && (c<127))
+    else
     {
         b->buf[b->head][b->indx] = c;
         b->indx = NEXT_BUF2_INDX(b->indx);
     }
 
-    //else
-    //{}
 }
 
 void update_splits(SplitQueue *q, LineBuffer *b)
@@ -146,24 +111,30 @@ void update_splits(SplitQueue *q, LineBuffer *b)
 
 }
 
-int get_next_split_msg(SplitQueue *q, const char *r_id, char *msg)
-{
-    if (queue_is_empty(q))
-        return 0;
-
-    pop_split_from_queue(q, msg);
-    strcat(msg, "&r=");
-    strcat(msg, r_id);
-    return 1;
-
-}
-
 int get_update_msg(SplitQueue *q, const char *r_id, char *msg)
 {
-    char temp[MAX_MSG_LEN];
-    int n = pop_all_from_queue(q, temp);
-    sprintf(msg, "r=%s&s=%s", r_id, temp);
-    return n;
+    int split_count = 0;
+    int pos = 1;
+
+    strcpy(msg, "[");
+    while ((!queue_is_empty(q)) && 
+           (split_count < MAX_MSG_SPLITS) &&
+           ((MAX_MSG_LEN-(pos+5) > MAX_SPLIT_LEN)))
+    {
+        if (split_count > 0)
+        {
+            strcat(msg, ",");
+            pos++;
+        }
+
+        pos += snprintf(&msg[pos], MAX_SPLIT_LEN, split_json,
+                        q->queue[q->tail].tag_id, q->queue[q->tail].time, r_id);
+
+        split_count++;
+        q->tail = NEXT_SPLIT_INDX(q->tail);
+    }
+    strcat(msg, "]");
+    return split_count;
 }
 
 void rfid_init(void)
