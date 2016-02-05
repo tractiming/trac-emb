@@ -1,0 +1,170 @@
+**************************************************************
+GENERAL COMMANDS
+**************************************************************
+Function = Reader
+ReaderName = Alien RFID Reader
+ReaderType = Alien RFID Tag Reader, Model: ALR-9900+ (Four Antenna / Gen 2 / 902-928 MHz)
+ReaderVersion = 14.07.01.00
+DSPVersion = DSP:05.05.08 reader:08 country:01 radio:37 board:04 FPGA:10.08.12.00
+ReaderNumber = 255
+BaudRate = 115200
+Username = alien
+MaxAntenna = 3
+AntennaSequence = 0
+RFAttenuation = 0
+RFLevel = 316
+RFModulation = DRM
+MyData = (Not Set)
+**************************************************************
+NETWORK COMMANDS
+**************************************************************
+MACAddress = 00:1B:5F:00:DF:04
+DHCP = OFF
+DHCPTimeout = 90
+IPAddress = 192.168.1.100
+Hostname = alien-00DF04
+UpgradeAddress = 0.0.0.0
+NetworkUpgrade = OFF
+Gateway = 192.168.1.1
+Netmask = 255.255.255.0
+DNS = 192.168.1.1
+NetworkTimeout = 90
+CommandPort = 23
+CommandPortLocal = 2300
+HeartbeatAddress = 255.255.255.255
+HeartbeatPort = 3988
+HeartbeatTime = 30
+HeartbeatCount = -1
+WWWPort = 80
+AcceptConnections = ANY
+**************************************************************
+TIME COMMANDS
+**************************************************************
+TimeServer = 132.163.4.103
+Time = 2016/02/05 07:01:14
+TimeZone = -8
+**************************************************************
+TAGLIST COMMANDS
+**************************************************************
+TagListFormat = Text
+TagListCustomFormat = %i
+TagDataFormatGroupSize = 2
+TagListMillis = ON
+PersistTime = 5
+TagListAntennaCombine = ON
+TagStreamMode = OFF
+TagStreamAddress = (Not Set)
+TagStreamFormat = Terse
+TagStreamCustomFormat = %k
+TagStreamKeepAliveTime = 30
+TagStreamCountFilter = 0
+StreamHeader = ON
+**************************************************************
+ACQUIRE COMMANDS
+**************************************************************
+AcquireMode = Inventory
+TagType = 16
+AcqG2Cycles = 1
+AcqG2Count = 3
+AcqG2Q = 3
+AcqG2QMax = 7
+AcqG2Select = 1
+AcqG2Session = 1
+AcqG2Mask = 0
+AcqG2MaskAction = Include
+AcqG2MaskAntenna = 0F
+AcqG2SL = All
+AcqG2AccessPwd = 00 00 00 00
+AcqG2TagData = 00
+AcqG2OpsMode = OFF
+AcqG2Ops = (No Ops)
+AcqG2Target = A
+AcqG2AntennaCombine = ON
+AcqTime = 0
+SpeedFilter = 0
+RSSIFilter = 0
+TagAuth = OFF
+**************************************************************
+I/O COMMANDS
+**************************************************************
+ExternalInput = 0
+ExternalOutput = 0
+InvertExternalInput = OFF
+InvertExternalOutput = OFF
+InitExternalOutput = 0
+IOType = DI
+IOListFormat = Text
+IOListCustomFormat = %E,%v
+IOStreamMode = OFF
+IOStreamAddress = (Not Set)
+IOStreamKeepAliveTime = 30
+IOStreamFormat = Terse
+IOStreamCustomFormat = %E,%v
+IOPersistTime = 0
+**************************************************************
+AUTOMODE COMMANDS
+**************************************************************
+AutoMode = ON
+AutoAction = Acquire
+AutoWaitOutput = 0
+AutoStartTrigger = 0 0
+AutoStartPause = 0
+AutoWorkOutput = 0
+AutoStopTrigger = 0 0
+AutoStopTimer = 0
+AutoStopPause = 0
+AutoTrueOutput = 0
+AutoFalseOutput = 0
+AutoErrorOutput = -1
+AutoProgError = 255
+AutoTruePause = 0
+AutoFalsePause = 0
+**************************************************************
+NOTIFY COMMANDS
+**************************************************************
+NotifyMode = ON
+NotifyAddress = SERIAL
+NotifyFormat = Text
+NotifyHeader = OFF
+NotifyTime = 0
+NotifyTrigger = Add
+NotifyKeepAliveTime = 30
+NotifyRetryCount = -1
+NotifyRetryPause = 10
+NotifyQueueLimit = 1000
+NotifyInclude = Tags
+MailServer = (Not Set)
+MailFrom = "Alien RFID Reader"
+**************************************************************
+PROGRAM COMMANDS
+**************************************************************
+ProgProtocol = 2
+ProgAntenna = 0
+ProgEPCData = 00 00 00 00 00 00 00 00 00 00 00 00
+ProgEPCDataInc = Success
+ProgEPCDataIncCount = -1
+ProgG2KillPwd = 00 00 00 00
+ProgG2AccessPwd = 00 00 00 00
+ProgUserData = 00 00
+ProgUserDataInc = Success
+ProgUserDataIncCount = -1
+ProgG2LockType = Lock
+ProgBlockSize = 0
+ProgBlockAlign = OFF
+ProgAttempts = 3
+ProgSuccessFormat = 1
+ProgSingulate = OFF
+ProgDataUnit = Word
+ProgAlienImageMap = Higgs2_96
+ProgAlienImageNSI = 00 00
+ProgG2NSI = FF FF
+**************************************************************
+EXPERIMENTAL COMMANDS
+**************************************************************
+AutoModeType = Standard
+AutoSeekTimer = 500
+AutoSeekPause = 250
+AutoSeekRFLevel = 316
+LBT = OFF
+LBTLimit = 1500
+LBTValue = 0
