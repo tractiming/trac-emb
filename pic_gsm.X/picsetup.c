@@ -37,14 +37,14 @@ void setup_pins(void) {
 
 /* Restarts pic (for example, if an initialization task fails).*/
 void pic_reset(void) {
-    SoftReset();
+        SoftReset();
 }
 
 /* Enable INT2, which accepts the kill signal. */
 void setup_shutdown_int(void) {
-    mINT3SetEdgeMode(0); // Rising edge = 1. Falling edge = 0.
-    mINT3SetIntPriority(5);
-    mINT3SetIntSubPriority(0);
-    mINT3ClearIntFlag();
-    mINT3IntEnable(1);
+        mINT3SetEdgeMode(0); // Rising edge = 1. Falling edge = 0.
+        mINT3SetIntPriority(5);
+        mINT3SetIntSubPriority(0);
+        mINT3ClearIntFlag();
+        mINT3IntEnable(1);
 }

@@ -37,9 +37,9 @@
 #define BRG_VAL ((PBCLK/2/Fsck)-2)
 
 #define POWERKEY LATAbits.LATA2
-#define GSM_LED LATBbits.LATB4
+#define GSM_LED  LATBbits.LATB4
 #define RFID_LED LATBbits.LATB15
-#define KILL LATBbits.LATB14
+#define KILL     LATBbits.LATB14
 
 #define MAX_STR_LEN 250
 
