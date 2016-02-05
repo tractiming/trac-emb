@@ -41,3 +41,9 @@ void write_string(UART_MODULE id, char *string)
                 while (!UARTTransmissionHasCompleted(id));
         }
 }
+
+void put_character(UART_MODULE id, const char character) {
+        while (!UARTTransmitterIsReady(id));
+        UARTSendDataByte(id, character);
+        while (!UARTTransmissionHasCompleted(id));
+}

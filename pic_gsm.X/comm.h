@@ -20,5 +20,6 @@ void delay_ms(unsigned int);
 void uart_init(UART_MODULE, long int, INT_SOURCE, INT_VECTOR,
                INT_PRIORITY, INT_SUB_PRIORITY);
 void write_string(UART_MODULE, char*);
+void put_character(UART_MODULE, const char);
 
 #endif /* COMM_H */
