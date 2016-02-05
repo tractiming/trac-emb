@@ -10,7 +10,7 @@ unsigned gsm_on;
 //const char apn[] = "Internetd.gdsp"; //vodafone
 const char apn[] = "apn.konekt.io"; //konekt
 const char split_endpoint[] = "https://trac-us.appspot.com/api/splits/";
-const char time_endpoint[] = "https://trac-us.appspot.com/api/updates/";
+const char time_endpoint[] = "https://trac-us.appspot.com/api/time/";
 
 const char http_header[] = "POST /api/splits/ HTTP/1.1\r\n"
                            "Host: trac-us.appspot.com\r\n"
@@ -282,43 +282,43 @@ int gsm_init(GsmState *s)
         return 0;
 }
 
+/* Get the current server time and format as "YYYY/MM/DD HH:MM:SS". */
 int gsm_get_time(GsmState *s, char *ctime)
 {
-    if (gsm_set_http_url(s, time_endpoint))
-        return -1;
-    delay_ms(250);
+        char *ts;
+        char str[GSM_BUFFER_LEN+1];
+        char tms[50];
+        int sv=0, j=0;
+        int yr, mon, day, hr, min, sec;
 
-    // Query the server for the current time.
-    char str[GSM_BUFFER_LEN+1];
-    gsm_send_command(s, GSM_GET, "AT+QHTTPGET\r", GSM_TIMEOUT);
-    delay_ms(100);
-    gsm_send_command(s, GSM_OK, "AT+QHTTPREAD\r", GSM_TIMEOUT);
-    delay_ms(100);
-    strncpy(str, s->buf, (s->indx+1));
+        if (gsm_set_http_url(s, time_endpoint))
+                return -1;
+        delay_ms(250);
 
-    // Parse the response for the time.
-    char *ts = str;
-    int sv=0, j=0;
-    char tms[50];
-    while (*ts)
-    {
-        if (*ts == ']')
-            sv = 0;
+        // Query the server for the current time.
+        gsm_send_command(s, GSM_GET, "AT+QHTTPGET\r", GSM_TIMEOUT);
+        delay_ms(100);
+        gsm_send_command(s, GSM_OK, "AT+QHTTPREAD\r", GSM_TIMEOUT);
+        delay_ms(100);
+        strncpy(str, s->buf, (s->indx+1));
 
-        if (sv)
-            tms[j++] = *ts;
+        // Response is formatted as "YYYY-MM-DDTHH:MM:SS.FFFZ"
+        ts = str;
+        while (*ts) {
+                if (*ts == '"')
+                        sv = 0;
+                if (sv)
+                        tms[j++] = *ts;
+                if (*ts == '"')
+                        sv = 1;
+                ts++;
+        }
+        tms[j] = '\0';
 
-        if (*ts == '[')
-            sv = 1;
+        sscanf(tms, "%d-%2d-%2dT%2d:%2d:%2d",
+               &yr, &mon, &day, &hr, &min, &sec);
+        sprintf(ctime, "%d/%02d/%02d %02d:%02d:%02d",
+                yr, mon, day, hr, min, sec);
 
-        ts++;
-    }
-    tms[j] = '\0';
-
-    int yr, mon, day, hr, min, sec;
-    sscanf(tms, "\"%d-%2d-%2d %2d:%2d:%2d\"", &yr, &mon, &day, &hr, &min, &sec);
-    sprintf(ctime, "%d/%02d/%02d %02d:%02d:%02d", yr, mon, day, hr, min, sec);
-
-    return 0;
-
+        return 0;
 }
