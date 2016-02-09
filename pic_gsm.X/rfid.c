@@ -105,22 +105,23 @@ int get_update_msg(SplitQueue *q, const char *r_id, char *msg)
 {
         int cnt = 0;
         int pos = 1;
+        int tl = q->tail;
 
         strcpy(msg, "[");
-        while ((!queue_is_empty(q)) &&
+        while ((q->head != tl) &&
                (cnt < MAX_MSG_SPLITS) &&
                ((MAX_MSG_LEN-(pos+5) > MAX_SPLIT_LEN))) {
-                        if (cnt > 0) {
-                                strcat(msg, ",");
-                                pos++;
-                        }
+                if (cnt > 0) {
+                        strcat(msg, ",");
+                        pos++;
+                }
 
-                        pos += snprintf(&msg[pos], MAX_SPLIT_LEN, split_json,
-                                        q->queue[q->tail].tag_id,
-                                        q->queue[q->tail].time, r_id);
+                pos += snprintf(&msg[pos], MAX_SPLIT_LEN, split_json,
+                                q->queue[tl].tag_id,
+                                q->queue[tl].time, r_id);
 
-                        cnt++;
-                        q->tail = NEXT_SPLIT_INDX(q->tail);
+                cnt++;
+                tl = NEXT_SPLIT_INDX(tl);
         }
         strcat(msg, "]");
         return cnt;

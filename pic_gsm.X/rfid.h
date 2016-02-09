@@ -1,16 +1,19 @@
 #ifndef RFID_H
 #define RFID_H
 
-#define NUM_SPLITS 50
-#define NEXT_SPLIT_INDX(i) ((i+1) % NUM_SPLITS)
-#define BUF_LEN1 10
-#define BUF_LEN2 200
-#define NEXT_BUF1_INDX(i) ((i+1) % BUF_LEN1)
-#define NEXT_BUF2_INDX(i) ((i+1) % BUF_LEN2)
-#define BOOT_WAIT 130   // Number of seconds to wait for Alien to turn on.
-#define MAX_MSG_SPLITS 10
-#define MAX_SPLIT_LEN 200
+#define NUM_SPLITS      50
+#define BUF_LEN1        10
+#define BUF_LEN2       200
+#define BOOT_WAIT      130   // Number of seconds to wait for Alien to turn on.
+#define MAX_MSG_SPLITS  10
+#define MAX_SPLIT_LEN  200
 #define MAX_MSG_LEN (MAX_MSG_SPLITS*MAX_SPLIT_LEN+10)
+
+#define INCR_SPLIT_INDX(i, n) ((i+n) % NUM_SPLITS)
+#define NEXT_SPLIT_INDX(i)    (INCR_SPLIT_INDX(i, 1))
+#define NEXT_BUF1_INDX(i)     ((i+1) % BUF_LEN1)
+#define NEXT_BUF2_INDX(i)     ((i+1) % BUF_LEN2)
+
 
 typedef struct
 {
