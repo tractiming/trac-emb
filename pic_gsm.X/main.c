@@ -11,6 +11,7 @@ const char reader_id[] = "A1016"; // Unique reader id for this device.
 int main(void)
 {
         int gsm_not_init = 1;
+        int cnt;
         char ctime[50];
         char post_msg[MAX_MSG_LEN];
 
@@ -44,16 +45,20 @@ int main(void)
         gsm_cfg_split_endpoint(&gsm_state); // Point to /api/splits w/ header
         delay_ms(1000);
         GSM_LED = 1;
-        
+
         while (1) {
                 update_splits(&rfid_split_queue, &rfid_line_buffer);
+                cnt = get_update_msg(&rfid_split_queue, reader_id, post_msg);
 
-                if (get_update_msg(&rfid_split_queue, reader_id, post_msg)) {
+                if (cnt) {
                         GSM_LED = 0;
-                        gsm_http_post(&gsm_state, post_msg);
+                        if (!gsm_http_post(&gsm_state, post_msg)) {
+                                rfid_split_queue.tail = INCR_SPLIT_INDX(
+                                        rfid_split_queue.tail, cnt);
+                        }
                         GSM_LED = 1;
                 }
-        
+
                 delay_ms(LOOP_DELAY);
         }
 
@@ -92,7 +97,7 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void)
 
 /* Shutdown ISR. */
 void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
-{    
+{
         // Send shutoff signal to GSM.
         if (gsm_on)
             gsm_pwr_off(&gsm_state);

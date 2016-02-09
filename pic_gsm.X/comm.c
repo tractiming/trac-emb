@@ -15,7 +15,7 @@ void delay_ms(unsigned int msec)
 void uart_init(UART_MODULE id, long int baudrate, INT_SOURCE src,
                INT_VECTOR vec, INT_PRIORITY pr, INT_SUB_PRIORITY sub_pr)
 {
-        UARTConfigure(id, UART_ENABLE_PINS_TX_RX_ONLY );
+        UARTConfigure(id, UART_ENABLE_PINS_TX_RX_ONLY);
         UARTSetFifoMode(id,
                         UART_INTERRUPT_ON_TX_DONE |
                         UART_INTERRUPT_ON_RX_NOT_EMPTY);
