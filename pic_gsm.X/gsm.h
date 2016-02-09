@@ -2,7 +2,7 @@
 #define	GSM_H
 
 #define GSM_BUFFER_LEN     100
-#define GSM_TIMEOUT      10000
+#define GSM_TIMEOUT      11000//10000
 #define GSM_MAX_HTTP_LEN  3000
 #define GSM_HEADER_LEN     250
 #define NEXT_GSM_INDX(i) ((i+1) % GSM_BUFFER_LEN)
@@ -19,6 +19,7 @@ typedef enum
     GSM_PWR_DOWN =  6,
     GSM_CME      =  7,
     GSM_GET      =  8,
+    GSM_READ     =  9
 } GsmResponse;
 
 typedef struct
@@ -39,7 +40,7 @@ int gsm_http_post(GsmState *, char *);
 void gsm_pwr_on(void);
 int gsm_pwr_off(GsmState *);
 void gsm_pwr_off_hard(void);
-int gsm_get_time(GsmState *, char*);
+int gsm_get_time(GsmState *, char*, int);
 int gsm_cfg_split_endpoint(GsmState *);
 
 #endif	/* GSM_H */

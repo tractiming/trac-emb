@@ -1,5 +1,6 @@
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include "picsetup.h"
 #include "gsm.h"
 #include "comm.h"
@@ -8,9 +9,11 @@ GsmState gsm_state;
 unsigned gsm_on;
 
 //const char apn[] = "Internetd.gdsp"; //vodafone
-const char apn[] = "apn.konekt.io"; //konekt
+//const char apn[] = "apn.konekt.io";  //konekt
+const char apn[] = "att.mvno";         // AT&T (H2O, RedPocket)
 const char split_endpoint[] = "https://trac-us.appspot.com/api/splits/";
 const char time_endpoint[] = "https://trac-us.appspot.com/api/time/";
+const char time_fmt[] = "%Y/%m/%d %H:%M:%S";
 
 const char http_header[] = "POST /api/splits/ HTTP/1.1\r\n"
                            "Host: trac-us.appspot.com\r\n"
@@ -76,8 +79,12 @@ static void gsm_update_state(GsmState *s)
         else if (compare_response(s, "DOWN"))
                 s->resp = GSM_PWR_DOWN;
 
-        else if (compare_response(s, "GET:"))
+        // "GET" or "READ" may appear in a message that also includes an "OK".
+        if (compare_response(s, "GET:"))
                 s->resp = GSM_GET;
+
+        if (compare_response(s, "READ:"))
+                s->resp = GSM_READ;
 
 }
 
@@ -283,23 +290,25 @@ int gsm_init(GsmState *s)
 }
 
 /* Get the current server time and format as "YYYY/MM/DD HH:MM:SS". */
-int gsm_get_time(GsmState *s, char *ctime)
+int gsm_get_time(GsmState *s, char *ctime, int len)
 {
         char *ts;
         char str[GSM_BUFFER_LEN+1];
         char tms[50];
         int sv=0, j=0;
-        int yr, mon, day, hr, min, sec;
+        int yr, mon, day, hr, min, sec, ms;
+        struct tm t;
+        time_t now;
 
         if (gsm_set_http_url(s, time_endpoint))
                 return -1;
         delay_ms(250);
 
-        // Query the server for the current time.
+        OpenTimer23(T23_ON | T23_32BIT_MODE_ON, 0xFFFFFFFF);
+        
         gsm_send_command(s, GSM_GET, "AT+QHTTPGET\r", GSM_TIMEOUT);
-        delay_ms(100);
-        gsm_send_command(s, GSM_OK, "AT+QHTTPREAD\r", GSM_TIMEOUT);
-        delay_ms(100);
+        WriteTimer23(0);
+        gsm_send_command(s, GSM_READ, "AT+QHTTPREAD\r", GSM_TIMEOUT);
         strncpy(str, s->buf, (s->indx+1));
 
         // Response is formatted as "YYYY-MM-DDTHH:MM:SS.FFFZ"
@@ -315,10 +324,23 @@ int gsm_get_time(GsmState *s, char *ctime)
         }
         tms[j] = '\0';
 
-        sscanf(tms, "%d-%2d-%2dT%2d:%2d:%2d",
-               &yr, &mon, &day, &hr, &min, &sec);
-        sprintf(ctime, "%d/%02d/%02d %02d:%02d:%02d",
-                yr, mon, day, hr, min, sec);
+        sscanf(tms, "%d-%2d-%2dT%2d:%2d:%2d.%3d",
+               &yr, &mon, &day, &hr, &min, &sec, &ms);
+
+        t.tm_year = yr-1900;
+        t.tm_mon = mon-1;
+        t.tm_mday = day;
+        t.tm_hour = hr;
+        t.tm_min = min;
+        t.tm_sec = sec;
+        t.tm_isdst = -1;
+
+        now = mktime(&t) - 8 + 2; // FIXME: 8 sec delay in reader + wait for whole second
+        t = *gmtime(&now);
+        strftime(ctime, len, time_fmt, &t);
+
+        while (ReadTimer23() < (SYS_FREQ/1000)*(2000-ms));
+        CloseTimer23();
 
         return 0;
 }
