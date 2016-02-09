@@ -38,7 +38,7 @@ int main(void)
         }
 
         rfid_init();
-        gsm_get_time(&gsm_state, ctime);
+        gsm_get_time(&gsm_state, ctime, 50);
         rfid_set_time(ctime);
 
         gsm_cfg_split_endpoint(&gsm_state); // Point to /api/splits w/ header
