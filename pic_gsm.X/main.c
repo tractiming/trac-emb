@@ -1,8 +1,13 @@
 #define SETUP
+//#define USE_LCD  /* Uncomment to enable screen functionality. */
 #include "picsetup.h"
 #include "comm.h"
 #include "gsm.h"
 #include "rfid.h"
+
+#ifdef USE_LCD
+        #include "lcd.h"
+#endif
 
 #define LOOP_DELAY 2750 // Delay between updates (in msec)
 
@@ -20,6 +25,16 @@ int main(void)
         setup_pins();
         GSM_LED = 0;
         RFID_LED = 0;
+
+#ifdef USE_LCD
+        lcd_init_spi();
+        lcd_init();
+        lcd_init_display();
+
+        lcd_set_battery(BATTERY_OK);
+        lcd_set_cellular(CELLULAR_OK);
+        lcd_set_tags(0);
+#endif
 
         setup_shutdown_int();
         uart_init(GSM_UART, GSM_BAUDRATE, GSM_RX_INT, GSM_INT_VEC,
