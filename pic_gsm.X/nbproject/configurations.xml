@@ -8,6 +8,7 @@
       <itemPath>gsm.h</itemPath>
       <itemPath>comm.h</itemPath>
       <itemPath>rfid.h</itemPath>
+      <itemPath>lcd.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -22,6 +23,7 @@
       <itemPath>comm.c</itemPath>
       <itemPath>rfid.c</itemPath>
       <itemPath>strtok_r.c</itemPath>
+      <itemPath>lcd.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

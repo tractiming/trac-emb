@@ -32,7 +32,13 @@ void setup_pins(void) {
         // Not implemented.
         // RB14 (Pin 25) is the kill signal to the shutdown timer.
         //TRISBbits.TRISB14 = 0;
-        
+
+#ifdef USE_LCD
+        // SPI communication with LCD screen.
+        TRISBbits.TRISB13 = 0;     // RB13 (pin 24, output for A0 select)
+        TRISAbits.TRISA1 = 0;      // RA1 (pin 3, lcd reset line)
+        RPB2Rbits.RPB2R = 0b0011;  // SDO1 (pin 6, SDO1 out)
+#endif
 };
 
 /* Restarts pic (for example, if an initialization task fails).*/
