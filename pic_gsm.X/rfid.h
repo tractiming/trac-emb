@@ -1,7 +1,7 @@
 #ifndef RFID_H
 #define RFID_H
 
-#define NUM_SPLITS      50
+#define NUM_SPLITS     125
 #define BUF_LEN1        10
 #define BUF_LEN2       200
 #define BOOT_WAIT      130   // Number of seconds to wait for Alien to turn on.
