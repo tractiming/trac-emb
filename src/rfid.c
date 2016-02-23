@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "picsetup.h"
 #include "rfid.h"
@@ -135,10 +136,12 @@ void rfid_init(void)
         int j;
         WriteCoreTimer(0);
         while (ReadCoreTimer() < (SYS_FREQ/2000)*BOOT_WAIT*1000) {
+#ifndef TESTING
                 GSM_LED = 1;
                 for (j=0; j<2000000; j++);
                 GSM_LED = 0;
                 for (j=0; j<2000000; j++);
+#endif
         }
 
         clear_queue(&rfid_split_queue);

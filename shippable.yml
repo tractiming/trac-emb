@@ -1,0 +1,18 @@
+install:
+  - sudo apt-get install cmake
+  - git clone git://git.cryptomilk.org/projects/cmocka.git
+  - cd cmocka
+  - mkdir build && cd build
+  - cmake ..
+  - make
+  - sudo make install
+  - cd ../..
+
+before_script:
+  - cd tests
+  - make
+
+script:
+  - cd build
+  - export LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+  - ./test_rfid && ./test_gsm
