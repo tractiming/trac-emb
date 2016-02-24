@@ -4,11 +4,11 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <itemPath>picsetup.h</itemPath>
-      <itemPath>gsm.h</itemPath>
-      <itemPath>comm.h</itemPath>
-      <itemPath>rfid.h</itemPath>
-      <itemPath>lcd.h</itemPath>
+      <itemPath>../src/picsetup.h</itemPath>
+      <itemPath>../src/gsm.h</itemPath>
+      <itemPath>../src/comm.h</itemPath>
+      <itemPath>../src/rfid.h</itemPath>
+      <itemPath>../src/lcd.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -17,13 +17,13 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <itemPath>main.c</itemPath>
-      <itemPath>picsetup.c</itemPath>
-      <itemPath>gsm.c</itemPath>
-      <itemPath>comm.c</itemPath>
-      <itemPath>rfid.c</itemPath>
-      <itemPath>strtok_r.c</itemPath>
-      <itemPath>lcd.c</itemPath>
+      <itemPath>../src/main.c</itemPath>
+      <itemPath>../src/picsetup.c</itemPath>
+      <itemPath>../src/gsm.c</itemPath>
+      <itemPath>../src/comm.c</itemPath>
+      <itemPath>../src/rfid.c</itemPath>
+      <itemPath>../src/strtok_r.c</itemPath>
+      <itemPath>../src/lcd.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
