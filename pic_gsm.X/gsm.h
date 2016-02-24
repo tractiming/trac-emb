@@ -3,6 +3,7 @@
 
 #define GSM_BUFFER_LEN     100
 #define GSM_TIMEOUT      11000//10000
+#define GSM_MAX_RETRIES      5
 #define GSM_MAX_HTTP_LEN  3000
 #define GSM_HEADER_LEN     250
 #define NEXT_GSM_INDX(i) ((i+1) % GSM_BUFFER_LEN)

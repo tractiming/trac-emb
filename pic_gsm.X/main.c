@@ -17,6 +17,7 @@ int main(void)
 {
         int gsm_not_init = 1;
         int cnt;
+        int num_retries = 0;
         char ctime[50];
         char post_msg[MAX_MSG_LEN];
 
@@ -67,9 +68,13 @@ int main(void)
 
                 if (cnt) {
                         GSM_LED = 0;
-                        if (!gsm_http_post(&gsm_state, post_msg)) {
+                        if (!gsm_http_post(&gsm_state, post_msg)
+                            || (num_retries > GSM_MAX_RETRIES)) {
                                 rfid_split_queue.tail = INCR_SPLIT_INDX(
                                         rfid_split_queue.tail, cnt);
+                                num_retries = 0;
+                        } else {
+                                num_retries++;
                         }
                         GSM_LED = 1;
                 }
