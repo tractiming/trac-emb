@@ -1,9 +1,15 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include "picsetup.h"
 #include "gsm.h"
 #include "comm.h"
+
+#ifdef TESTING
+LATAbits_t LATAbits;
+LATBbits_t LATBbits;
+#endif
 
 GsmState gsm_state;
 unsigned gsm_on;
