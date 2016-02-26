@@ -48,6 +48,7 @@ int main(void)
         while (gsm_not_init) {
                 gsm_not_init = gsm_init(&gsm_state);
                 if (gsm_not_init) {
+                        delay_ms(2000);
                         gsm_pwr_off(&gsm_state);
                         delay_ms(10000); // wait 10 sec before trying again
                 }
