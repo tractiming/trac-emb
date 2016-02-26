@@ -15,8 +15,8 @@ GsmState gsm_state;
 unsigned gsm_on;
 
 //const char apn[] = "Internetd.gdsp"; //vodafone
-//const char apn[] = "apn.konekt.io";  //konekt
-const char apn[] = "att.mvno";         // AT&T (H2O, RedPocket)
+const char apn[] = "apn.konekt.io";    //konekt
+//const char apn[] = "att.mvno";       // AT&T (H2O, RedPocket)
 const char split_endpoint[] = "https://trac-us.appspot.com/api/splits/";
 const char time_endpoint[] = "https://trac-us.appspot.com/api/time/";
 const char time_fmt[] = "%Y/%m/%d %H:%M:%S";
@@ -284,8 +284,11 @@ int gsm_init(GsmState *s)
                 return -3;
         delay_ms(200);
 
-        // Bring up network connection.
-        if (gsm_send_command(s, GSM_OK, "AT+QIACT=1\r", GSM_TIMEOUT))
+        /* Bring up network connection. (May take at most 150 seconds to return
+         * OK or ERROR. Before response is returned, other AT commands cannot
+         * be executed.)
+         */
+        if (gsm_send_command(s, GSM_OK, "AT+QIACT=1\r", 155000))
                 return -4;
         delay_ms(5000);
 
