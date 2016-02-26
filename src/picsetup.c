@@ -3,17 +3,17 @@
 void setup_pins(void)
 {
 
-	// Set all analog input pins to digital mode.
-	ANSELA = 0;
-	ANSELB = 0;
+        // Set all analog input pins to digital mode.
+        ANSELA = 0;
+        ANSELB = 0;
 
         // Set all pins to digital inputs.
         //TRISA = 0xFFFF;
         //TRISB = 0xFFFF;
 
         // Set the pins for uart communication.
-	U2RXRbits.U2RXR = 0b0100; // U2RX (pin 17, 5V tolerant)
-	RPB9Rbits.RPB9R = 0b0010; // U2TX (pin 18, 5V tolerant)
+        U2RXRbits.U2RXR = 0b0100; // U2RX (pin 17, 5V tolerant)
+        RPB9Rbits.RPB9R = 0b0010; // U2TX (pin 18, 5V tolerant)
         U1RXRbits.U1RXR = 0b0010; // U1RX (pin 12)
         RPA0Rbits.RPA0R = 0b0001; // U1TX (pin 2)
 
@@ -56,4 +56,12 @@ void setup_shutdown_int(void)
         mINT3SetIntSubPriority(0);
         mINT3ClearIntFlag();
         mINT3IntEnable(1);
+}
+
+/* Set up timer 4 with an interrupt at 4 Hz and input on pin 10 (RA3). */
+void setup_battery_int(void)
+{
+        ConfigINT1(EXT_INT_ENABLE | RISING_EDGE_INT | EXT_INT_PRI_5);
+        OpenTimer(T4_ON | T4_PS_1_256, 39062);
+        ConfigIntTimer4(T4_INT_ON | T4_INT_PRIOR_4 | T4_INT_SUB_PRIOR_2);
 }

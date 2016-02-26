@@ -1,4 +1,5 @@
 #define SETUP
+//#define USE_BATTERY_MONITOR    /* Uncomment to enable battery monitoring. */
 #include "picsetup.h"
 #include "comm.h"
 #include "gsm.h"
@@ -18,6 +19,7 @@ int main(void)
         int rssi;
         int loop = 0;
         int alien_chk = 0;
+        int battery_state = 1;
         char ctime[50];
         char post_msg[MAX_MSG_LEN];
 
@@ -34,6 +36,10 @@ int main(void)
         lcd_set_cellular(CELLULAR_PENDING);
         lcd_set_status(STAT_BOOTING);
         lcd_set_tags(0);
+
+#ifdef USE_BATTERY_MONITOR
+        setup_battery_int();
+#endif
 
         setup_shutdown_int();
         uart_init(GSM_UART, GSM_BAUDRATE, GSM_RX_INT, GSM_INT_VEC,
@@ -158,3 +164,12 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
 
         mINT3ClearIntFlag();
 }
+
+#ifdef USE_BATTERY_MONITOR
+/* Battery monitor ISR. */
+void __ISR(_EXTERNAL_1_VECTOR, IPL5AUTO) voltage_isr(void)
+{
+        battery_state = 0;
+        INTClearFlag(INT_INT1);
+}
+#endif

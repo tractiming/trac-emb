@@ -48,5 +48,6 @@
 void setup_pins(void);
 void pic_reset(void);
 void setup_shutdown_int(void);
+void setup_battery_int(void);
 
 #endif	/* PICSETUP_H */
