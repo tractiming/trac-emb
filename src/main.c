@@ -11,6 +11,7 @@
 #define RFID_CHECK   10                   // Interval to check alien status
 
 const char reader_id[] = "Z2112";         // Unique reader id for this device
+int battery_state = 1;
 
 int main(void)
 {
@@ -151,7 +152,7 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
 
         // Send shutoff signal to GSM.
         if (gsm_on)
-            gsm_pwr_off(&gsm_state);
+                gsm_pwr_off(&gsm_state);
 
         // Send KILL signal to timer. (Not implemented.)
 

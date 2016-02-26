@@ -2,7 +2,6 @@
 
 void setup_pins(void)
 {
-
         // Set all analog input pins to digital mode.
         ANSELA = 0;
         ANSELB = 0;
@@ -39,6 +38,11 @@ void setup_pins(void)
         TRISBbits.TRISB13 = 0;     // RB13 (pin 24, output for A0 select)
         TRISAbits.TRISA1 = 0;      // RA1 (pin 3, lcd reset line)
         RPB2Rbits.RPB2R = 0b0011;  // SDO1 (pin 6, SDO1 out)
+#endif
+
+#ifdef USE_BATTERY_MONITOR
+        // Set RA3 (Pin 10) to be battery level input.
+        TRISAbits.TRISA3 = 1;
 #endif
 }
 

@@ -6,7 +6,6 @@
 #include <plib.h>
 
 #ifdef SETUP
-
 #pragma config IOL1WAY  = OFF       // Peripheral Pin Select Configuration, allow mult reconfig
 #pragma config PMDL1WAY = OFF	    // Peripheral Module Disable Config, allow mult reconfig
 #pragma config FPLLODIV = DIV_2     // PLL Output Divider
@@ -27,7 +26,6 @@
 #pragma config ICESEL   = ICS_PGx1  // ICE/ICD Comm Channel Select
 #pragma config JTAGEN   = OFF       // JTAG Enable
 #pragma config DEBUG    = OFF       // Background Debugger Enable
-
 #endif
 
 #define USE_LCD                 /* Uncomment to enable screen functionality. */
@@ -38,10 +36,11 @@
 #define Fsck	50000
 #define BRG_VAL ((PBCLK/2/Fsck)-2)
 
-#define POWERKEY LATAbits.LATA2
-#define GSM_LED  LATBbits.LATB4
-#define RFID_LED LATBbits.LATB15
-#define KILL     LATBbits.LATB14
+#define POWERKEY        LATAbits.LATA2
+#define GSM_LED         LATBbits.LATB4
+#define RFID_LED        LATBbits.LATB15
+#define KILL            LATBbits.LATB14
+#define BATTERY_STATUS  PORTAbits.RA3
 
 #define MAX_STR_LEN 250
 
