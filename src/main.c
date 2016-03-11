@@ -1,12 +1,11 @@
 #define SETUP
-//#define USE_LCD  /* Uncomment to enable screen functionality. */
 #include "picsetup.h"
 #include "comm.h"
 #include "gsm.h"
 #include "rfid.h"
 
 #ifdef USE_LCD
-        #include "lcd.h"
+#include "lcd.h"
 #endif
 
 #define LOOP_DELAY 2750 // Delay between updates (in msec)
@@ -16,7 +15,7 @@ const char reader_id[] = "A1016"; // Unique reader id for this device.
 int main(void)
 {
         int gsm_not_init = 1;
-        int cnt;
+        int cnt, total = 0;
         char ctime[50];
         char post_msg[MAX_MSG_LEN];
 
@@ -24,7 +23,7 @@ int main(void)
         SYSTEMConfigPerformance(SYS_FREQ);
         setup_pins();
         GSM_LED = 0;
-        RFID_LED = 0;
+        RFID_LED = 1;
 
 #ifdef USE_LCD
         lcd_init_spi();
@@ -71,8 +70,13 @@ int main(void)
                         if (!gsm_http_post(&gsm_state, post_msg)) {
                                 rfid_split_queue.tail = INCR_SPLIT_INDX(
                                         rfid_split_queue.tail, cnt);
+                                total += cnt;
                         }
                         GSM_LED = 1;
+
+#ifdef USE_LCD
+                        lcd_set_tags(total);
+#endif
                 }
 
                 delay_ms(LOOP_DELAY);
