@@ -30,6 +30,8 @@
 
 #endif
 
+#define USE_LCD                 /* Uncomment to enable screen functionality. */
+
 #define SYS_FREQ 40000000L
 #define PBCLK  (SYS_FREQ)
 
