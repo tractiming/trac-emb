@@ -13,6 +13,12 @@ typedef enum {
         CELLULAR_LOW
 } CellularMessage;
 
+typedef enum {
+        STAT_BOOTING,
+        STAT_READY,
+        STAT_SHUTDOWN
+} StatusMessage;
+
 void lcd_init(void);
 void lcd_init_display(void);
 void lcd_init_spi(void);
@@ -22,5 +28,6 @@ void lcd_clear(void);
 void lcd_set_battery(BatteryMessage);
 void lcd_set_cellular(CellularMessage);
 void lcd_set_tags(int);
+void lcd_set_status(StatusMessage);
 
 #endif	/* LCD_H */

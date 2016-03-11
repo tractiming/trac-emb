@@ -222,6 +222,7 @@ void lcd_init_display(void)
         lcd_write_string("battery: ", 3, 0);
         lcd_write_string("tags read: ", 2, 0);
         lcd_write_string("cellular: ", 1, 0);
+        lcd_write_string("status: ", 0, 0);
         send_cmd(LCD_DISPLAY_ON, CMD_MODE);
 }
 
@@ -263,4 +264,17 @@ void lcd_set_tags(int n)
         char s[6];
         sprintf(s, "%5d", n);
         lcd_write_string(s, 2, 77);
+}
+
+/* Set the overall status of the reader. */
+void lcd_set_status(StatusMessage msg)
+{
+        char s[9];
+        switch(msg) {
+                case STAT_BOOTING:  strcpy(s, "BOOTING "); break;
+                case STAT_READY:    strcpy(s, "READY   "); break;
+                case STAT_SHUTDOWN: strcpy(s, "SHUTDOWN"); break;
+                default:            strcpy(s, "        ");
+        }
+        lcd_write_string(s, 0, 56);
 }
