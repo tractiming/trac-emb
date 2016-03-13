@@ -1,6 +1,7 @@
 #include "picsetup.h"
 
-void setup_pins(void) {
+void setup_pins(void)
+{
 
 	// Set all analog input pins to digital mode.
 	ANSELA = 0;
@@ -39,15 +40,17 @@ void setup_pins(void) {
         TRISAbits.TRISA1 = 0;      // RA1 (pin 3, lcd reset line)
         RPB2Rbits.RPB2R = 0b0011;  // SDO1 (pin 6, SDO1 out)
 #endif
-};
+}
 
 /* Restarts pic (for example, if an initialization task fails).*/
-void pic_reset(void) {
+void pic_reset(void)
+{
         SoftReset();
 }
 
 /* Enable INT2, which accepts the kill signal. */
-void setup_shutdown_int(void) {
+void setup_shutdown_int(void)
+{
         mINT3SetEdgeMode(0); // Rising edge = 1. Falling edge = 0.
         mINT3SetIntPriority(5);
         mINT3SetIntSubPriority(0);
