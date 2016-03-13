@@ -145,6 +145,7 @@ static void send_cmd(unsigned char data, LCDCommandMode mode)
 /* Write a string of characters starting at a given page and column. */
 void lcd_write_string(char *data, unsigned char page, unsigned char col)
 {
+#ifdef USE_LCD
         int i, c;
 
         send_cmd(SET_PAGE_ADDRESS(page), CMD_MODE);
@@ -159,11 +160,13 @@ void lcd_write_string(char *data, unsigned char page, unsigned char col)
                 }
                 data++;
         }
+#endif
 }
 
 /* Write a full bitmap to the screen. */
 void lcd_write_bitmap(unsigned char * lcd_string)
 {
+#ifdef USE_LCD
         unsigned int i, j;
         unsigned char page = 0xB0;
 
@@ -182,11 +185,13 @@ void lcd_write_bitmap(unsigned char * lcd_string)
                 page++;
         }
         send_cmd(LCD_DISPLAY_ON, CMD_MODE);
+#endif
 }
 
 /* Clear the screen by writing a space to every character slot. */
 void lcd_clear(void)
 {
+#ifdef USE_LCD
         int i;
         char blnk[] = "                   ";  // 128 pxls/7 pxls per char ~ 19
 
@@ -194,11 +199,13 @@ void lcd_clear(void)
         for (i=0; i<LCD_NUM_PAGES; i++)
                 lcd_write_string(blnk, i, 0);
         send_cmd(LCD_DISPLAY_ON, CMD_MODE);
+#endif
 }
 
 /* Turn on and initialize the LCD screen. */
 void lcd_init(void)
 {
+#ifdef USE_LCD
         RST = 0;
         delay_ms(5);
         RST = 1;
@@ -212,11 +219,13 @@ void lcd_init(void)
         send_cmd(0x21, CMD_MODE); //resistor ratio set
         send_cmd(0x81, CMD_MODE); //Electronic volume command (set contrast)
         send_cmd(0x2F, CMD_MODE); //Electronic volume value (contrast value)
+#endif
 }
 
 /* Turn on display with battery, cellular, and tag read information. */
 void lcd_init_display(void)
 {
+#ifdef USE_LCD
         lcd_clear();
         send_cmd(LCD_DISPLAY_OFF, CMD_MODE);
         lcd_write_string("battery: ", 3, 0);
@@ -224,17 +233,21 @@ void lcd_init_display(void)
         lcd_write_string("cellular: ", 1, 0);
         lcd_write_string("status: ", 0, 0);
         send_cmd(LCD_DISPLAY_ON, CMD_MODE);
+#endif
 }
 
 /* Configure SPI communication on the PIC. */
 void lcd_init_spi(void)
 {
+#ifdef USE_LCD
         SpiChnOpen(SPI_CHANNEL, SPI_OPEN_MSTEN | SPI_OPEN_DISSDI, 4);
+#endif
 }
 
 /* Set the battery status message. */
 void lcd_set_battery(BatteryMessage msg)
 {
+#ifdef USE_LCD
         char s[4];
         switch(msg) {
                 case BATTERY_OK:  strcpy(s, "OK "); break;
@@ -242,11 +255,13 @@ void lcd_set_battery(BatteryMessage msg)
                 default:          strcpy(s, "   ");
         }
         lcd_write_string(s, 3, 63);
+#endif
 }
 
 /* Set the cell reception message. */
 void lcd_set_cellular(CellularMessage msg)
 {
+#ifdef USE_LCD
         char s[5];
         switch(msg) {
                 case CELLULAR_OK:      strcpy(s, "OK  "); break;
@@ -256,19 +271,23 @@ void lcd_set_cellular(CellularMessage msg)
                 default:               strcpy(s, "    ");
         }
         lcd_write_string(s, 1, 70);
+#endif
 }
 
 /* Set the number of tags read message. */
 void lcd_set_tags(int n)
 {
+#ifdef USE_LCD
         char s[6];
         sprintf(s, "%5d", n);
         lcd_write_string(s, 2, 77);
+#endif
 }
 
 /* Set the overall status of the reader. */
 void lcd_set_status(StatusMessage msg)
 {
+#ifdef USE_LCD
         char s[9];
         switch(msg) {
                 case STAT_BOOTING:  strcpy(s, "BOOTING "); break;
@@ -277,4 +296,5 @@ void lcd_set_status(StatusMessage msg)
                 default:            strcpy(s, "        ");
         }
         lcd_write_string(s, 0, 56);
+#endif
 }

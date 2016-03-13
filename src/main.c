@@ -3,14 +3,12 @@
 #include "comm.h"
 #include "gsm.h"
 #include "rfid.h"
-
-#ifdef USE_LCD
 #include "lcd.h"
-#endif
 
-#define LOOP_DELAY 2750 // Delay between updates (in msec)
+#define LOOP_DELAY 2750                   // Delay between updates (in msec)
+#define RSSI_CHECK    7                   // Interval yo check signal strength
 
-const char reader_id[] = "Z2112"; // Unique reader id for this device.
+const char reader_id[] = "Z2112";         // Unique reader id for this device
 
 int main(void)
 {
@@ -27,16 +25,13 @@ int main(void)
         GSM_LED = 0;
         RFID_LED = 1;
 
-#ifdef USE_LCD
         lcd_init_spi();
         lcd_init();
         lcd_init_display();
-
         lcd_set_battery(BATTERY_OK);
         lcd_set_cellular(CELLULAR_PENDING);
         lcd_set_status(STAT_BOOTING);
         lcd_set_tags(0);
-#endif
 
         setup_shutdown_int();
         uart_init(GSM_UART, GSM_BAUDRATE, GSM_RX_INT, GSM_INT_VEC,
@@ -55,9 +50,7 @@ int main(void)
                         delay_ms(10000); // wait 10 sec before trying again
                 }
         }
-#ifdef USE_LCD
         lcd_set_cellular(CELLULAR_OK);
-#endif
 
         rfid_init();
         gsm_get_time(&gsm_state, ctime, 50);
@@ -66,10 +59,7 @@ int main(void)
         gsm_cfg_split_endpoint(&gsm_state); // Point to /api/splits w/ header
         delay_ms(1000);
         GSM_LED = 1;
-
-#ifdef USE_LCD
         lcd_set_status(STAT_READY);
-#endif
 
         while (1) {
                 update_splits(&rfid_split_queue, &rfid_line_buffer);
@@ -83,26 +73,20 @@ int main(void)
                                 total += cnt;
                         }
                         GSM_LED = 1;
-
-#ifdef USE_LCD
                         lcd_set_tags(total);
-#endif
                 }
 
                 delay_ms(LOOP_DELAY);
 
-#ifdef USE_LCD
                 loop++;
-                if (loop == 7) {
+                if (loop == RSSI_CHECK) {
                         rssi = gsm_get_signal_strength(&gsm_state);
-                        if ((rssi == 99) || (rssi <= GSM_LOW_SIGNAL)) {
+                        if ((rssi == 99) || (rssi <= GSM_LOW_SIGNAL))
                                 lcd_set_cellular(CELLULAR_LOW);
-                        } else {
+                        else
                                 lcd_set_cellular(CELLULAR_OK);
-                        }
                         loop = 0;
                 }
-#endif
         }
 
         return 0;
@@ -141,9 +125,8 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void)
 /* Shutdown ISR. */
 void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
 {
-#ifdef USE_LCD
         lcd_set_status(STAT_SHUTDOWN);
-#endif
+
         // Send shutoff signal to GSM.
         if (gsm_on)
             gsm_pwr_off(&gsm_state);
