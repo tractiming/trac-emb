@@ -33,7 +33,8 @@ int main(void)
         lcd_init_display();
 
         lcd_set_battery(BATTERY_OK);
-        lcd_set_cellular(CELLULAR_OK);
+        lcd_set_cellular(CELLULAR_PENDING);
+        lcd_set_status(STAT_BOOTING);
         lcd_set_tags(0);
 #endif
 
@@ -54,6 +55,9 @@ int main(void)
                         delay_ms(10000); // wait 10 sec before trying again
                 }
         }
+#ifdef USE_LCD
+        lcd_set_cellular(CELLULAR_OK);
+#endif
 
         rfid_init();
         gsm_get_time(&gsm_state, ctime, 50);
@@ -62,6 +66,10 @@ int main(void)
         gsm_cfg_split_endpoint(&gsm_state); // Point to /api/splits w/ header
         delay_ms(1000);
         GSM_LED = 1;
+
+#ifdef USE_LCD
+        lcd_set_status(STAT_READY);
+#endif
 
         while (1) {
                 update_splits(&rfid_split_queue, &rfid_line_buffer);
@@ -133,6 +141,9 @@ void __ISR(RFID_UART_VEC, IPL6SOFT) IntRFIDUartHandler(void)
 /* Shutdown ISR. */
 void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
 {
+#ifdef USE_LCD
+        lcd_set_status(STAT_SHUTDOWN);
+#endif
         // Send shutoff signal to GSM.
         if (gsm_on)
             gsm_pwr_off(&gsm_state);
@@ -144,6 +155,7 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
         INTEnable(GSM_RX_INT, INT_DISABLED);
 
         GSM_LED = 0;
+        RFID_LED = 0;
 
         mINT3ClearIntFlag();
 }
