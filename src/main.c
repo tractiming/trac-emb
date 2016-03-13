@@ -10,12 +10,14 @@
 
 #define LOOP_DELAY 2750 // Delay between updates (in msec)
 
-const char reader_id[] = "A1016"; // Unique reader id for this device.
+const char reader_id[] = "Z2112"; // Unique reader id for this device.
 
 int main(void)
 {
         int gsm_not_init = 1;
         int cnt, total = 0;
+        int rssi;
+        int loop = 0;
         char ctime[50];
         char post_msg[MAX_MSG_LEN];
 
@@ -80,6 +82,19 @@ int main(void)
                 }
 
                 delay_ms(LOOP_DELAY);
+
+#ifdef USE_LCD
+                loop++;
+                if (loop == 7) {
+                        rssi = gsm_get_signal_strength(&gsm_state);
+                        if ((rssi == 99) || (rssi <= GSM_LOW_SIGNAL)) {
+                                lcd_set_cellular(CELLULAR_LOW);
+                        } else {
+                                lcd_set_cellular(CELLULAR_OK);
+                        }
+                        loop = 0;
+                }
+#endif
         }
 
         return 0;

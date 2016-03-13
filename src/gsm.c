@@ -15,8 +15,8 @@ GsmState gsm_state;
 unsigned gsm_on;
 
 //const char apn[] = "Internetd.gdsp"; //vodafone
-const char apn[] = "apn.konekt.io";    //konekt
-//const char apn[] = "att.mvno";       // AT&T (H2O, RedPocket)
+//const char apn[] = "apn.konekt.io";    //konekt
+const char apn[] = "att.mvno";       // AT&T (H2O, RedPocket)
 const char split_endpoint[] = "https://trac-us.appspot.com/api/splits/";
 const char time_endpoint[] = "https://trac-us.appspot.com/api/time/";
 const char time_fmt[] = "%Y/%m/%d %H:%M:%S";
@@ -39,8 +39,10 @@ static void gsm_clear_buffer(GsmState *s)
 
 void gsm_add_to_buffer(GsmState *s, char c)
 {
-        s->buf[s->indx] = c;
-        s->indx = NEXT_GSM_INDX(s->indx);
+        if ((c >= 32) && (c <= 127)) {
+                s->buf[s->indx] = c;
+                s->indx = NEXT_GSM_INDX(s->indx);
+        }
 }
 
 static int compare_response(GsmState *s, const char *str)
@@ -91,7 +93,6 @@ static void gsm_update_state(GsmState *s)
 
         if (compare_response(s, "READ:"))
                 s->resp = GSM_READ;
-
 }
 
 /* Wait for the GSM to give response. Timeout if not received. */
@@ -172,8 +173,8 @@ void gsm_pwr_off_hard(void)
 }
 
 /* Set the HTTP url to which the GSM sends data. */
-static int gsm_set_http_url(GsmState *s, const char *url) {
-
+static int gsm_set_http_url(GsmState *s, const char *url)
+{
         int len = strlen(url);
         char msg[100];
         sprintf(msg, "AT+QHTTPURL=%i,%i\r", len, 15);
@@ -352,4 +353,23 @@ int gsm_get_time(GsmState *s, char *ctime, int len)
         CloseTimer23();
 
         return 0;
+}
+
+/* Get the current signal strength from the module. */
+int gsm_get_signal_strength(GsmState *s)
+{
+        char str[GSM_BUFFER_LEN+1];
+        char *csq;
+        int rssi, ber;
+
+        if (gsm_send_command(s, GSM_OK, "AT+CSQ\r", GSM_TIMEOUT))
+                return -1;
+
+        strncpy(str, s->buf, (s->indx+1));
+        csq = strstr(str, "CSQ: ");
+        if (csq == NULL)
+                return -1;
+        sscanf(csq+5, "%2d,%2d", &rssi, &ber);
+
+        return rssi;
 }

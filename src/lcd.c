@@ -251,6 +251,7 @@ void lcd_set_cellular(CellularMessage msg)
                 case CELLULAR_OK:      strcpy(s, "OK  "); break;
                 case CELLULAR_FAILED:  strcpy(s, "FAIL"); break;
                 case CELLULAR_PENDING: strcpy(s, "PEND"); break;
+                case CELLULAR_LOW:     strcpy(s, "LOW "); break;
                 default:               strcpy(s, "    ");
         }
         lcd_write_string(s, 1, 70);

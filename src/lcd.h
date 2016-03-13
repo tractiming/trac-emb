@@ -9,7 +9,8 @@ typedef enum {
 typedef enum {
         CELLULAR_OK,
         CELLULAR_FAILED,
-        CELLULAR_PENDING
+        CELLULAR_PENDING,
+        CELLULAR_LOW
 } CellularMessage;
 
 void lcd_init(void);
