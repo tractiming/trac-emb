@@ -28,7 +28,8 @@
 #pragma config DEBUG    = OFF       // Background Debugger Enable
 #endif
 
-#define USE_LCD                 /* Uncomment to enable screen functionality. */
+#define USE_LCD                /* Uncomment to enable screen functionality. */
+//#define USE_BATTERY_MONITOR    /* Uncomment to enable battery monitoring. */
 
 #define SYS_FREQ 40000000L
 #define PBCLK  (SYS_FREQ)
@@ -40,7 +41,12 @@
 #define GSM_LED         LATBbits.LATB4
 #define RFID_LED        LATBbits.LATB15
 #define KILL            LATBbits.LATB14
-#define BATTERY_STATUS  PORTAbits.RA3
+
+#ifdef USE_BATTERY_MONITOR
+ #define BATTERY_STATUS  PORTAbits.RA3
+#else
+ #define BATTERY_STATUS  0
+#endif
 
 #define MAX_STR_LEN 250
 

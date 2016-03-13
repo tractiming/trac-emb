@@ -65,7 +65,9 @@ void setup_shutdown_int(void)
 /* Set up timer 4 with an interrupt at 4 Hz and input on pin 10 (RA3). */
 void setup_battery_int(void)
 {
+#ifdef USE_BATTERY_MONITOR
         ConfigINT1(EXT_INT_ENABLE | RISING_EDGE_INT | EXT_INT_PRI_5);
         OpenTimer(T4_ON | T4_PS_1_256, 39062);
         ConfigIntTimer4(T4_INT_ON | T4_INT_PRIOR_4 | T4_INT_SUB_PRIOR_2);
+#endif
 }
