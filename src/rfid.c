@@ -131,9 +131,11 @@ int get_update_msg(SplitQueue *q, const char *r_id, char *msg)
 /* Delay until reader is booted (while flashing RFID_LED).
  * TODO: Read output from Alien to determine when boot has finished.
  */
-void rfid_init(void)
+int rfid_init(void)
 {
-        int j;
+        int i, j, err=-1;
+        char *s;
+
         WriteCoreTimer(0);
         while (ReadCoreTimer() < (SYS_FREQ/2000)*BOOT_WAIT*1000) {
 #ifndef TESTING
@@ -144,9 +146,21 @@ void rfid_init(void)
 #endif
         }
 
+        for (i=0; i<BUF_LEN1; i++) {
+                // Check that the Alien has displayed a message indicating
+                // booting is complete.
+                s = strstr(rfid_line_buffer.buf[i], "Boot> Ready");
+                if (s) {
+                        err = 0;
+                        break;
+                }
+        }
+
         clear_queue(&rfid_split_queue);
         clear_buffer(&rfid_line_buffer);
         delay_ms(5000);
+
+        return err;
 }
 
 /* Set current time on the reader. Should be in YYYY/MM/DD hh:mm:ss format. */
@@ -156,4 +170,21 @@ void rfid_set_time(const char *ctime)
         sprintf(tmp, "Time=%s\r", ctime);
         write_string(RFID_UART, tmp);
         delay_ms(2000);
+}
+
+/* Check that the Alien is still alive. */
+int rfid_check_running(LineBuffer *b)
+{
+    /* We want to avoid parsing a specific response from the reader, since
+     * this could interfere with receiving normal notification messages.
+     * Instead, we simply enter a CR and see if the reader has any response, as
+     * denoted by our position in the response buffer.
+     */
+    int indx = b->indx;
+    int head = b->head;
+
+    write_string(RFID_UART, "\r");
+    delay_ms(250);
+
+    return ((b->indx != indx) || (b->head != head));
 }

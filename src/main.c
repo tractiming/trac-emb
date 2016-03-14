@@ -7,6 +7,7 @@
 
 #define LOOP_DELAY 2750                   // Delay between updates (in msec)
 #define RSSI_CHECK    7                   // Interval yo check signal strength
+#define RFID_CHECK   10                   // Interval to check alien status
 
 const char reader_id[] = "Z2112";         // Unique reader id for this device
 
@@ -16,6 +17,7 @@ int main(void)
         int cnt, total = 0;
         int rssi;
         int loop = 0;
+        int alien_chk = 0;
         char ctime[50];
         char post_msg[MAX_MSG_LEN];
 
@@ -52,14 +54,18 @@ int main(void)
         }
         lcd_set_cellular(CELLULAR_OK);
 
-        rfid_init();
-        gsm_get_time(&gsm_state, ctime, 50);
-        rfid_set_time(ctime);
+        if (rfid_init()) {
+                lcd_set_status(STAT_READER_ERROR);
+        } else {
+                gsm_get_time(&gsm_state, ctime, 50);
+                rfid_set_time(ctime);
 
-        gsm_cfg_split_endpoint(&gsm_state); // Point to /api/splits w/ header
-        delay_ms(1000);
-        GSM_LED = 1;
-        lcd_set_status(STAT_READY);
+                // Point to /api/splits w/ header
+                gsm_cfg_split_endpoint(&gsm_state);
+                delay_ms(1000);
+                GSM_LED = 1;
+                lcd_set_status(STAT_READY);
+        }
 
         while (1) {
                 update_splits(&rfid_split_queue, &rfid_line_buffer);
@@ -73,6 +79,7 @@ int main(void)
                                 total += cnt;
                         }
                         GSM_LED = 1;
+                        alien_chk = 0;
                         lcd_set_tags(total);
                 }
 
@@ -86,6 +93,15 @@ int main(void)
                         else
                                 lcd_set_cellular(CELLULAR_OK);
                         loop = 0;
+                }
+
+                alien_chk++;
+                if (alien_chk == RFID_CHECK) {
+                        if (!rfid_check_running(&rfid_line_buffer))
+                                lcd_set_status(STAT_READER_ERROR);
+                        else
+                                lcd_set_status(STAT_READY);
+                        alien_chk = 0;
                 }
         }
 
