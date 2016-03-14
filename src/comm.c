@@ -32,7 +32,7 @@ void uart_init(UART_MODULE id, long int baudrate, INT_SOURCE src,
 }
 
 /* Write a string over a serial port. */
-void write_string(UART_MODULE id, char *string)
+void write_string(UART_MODULE id, const char *string)
 {
         while (*string != '\0') {
                 while (!UARTTransmitterIsReady(id));

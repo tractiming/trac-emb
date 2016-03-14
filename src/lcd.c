@@ -290,10 +290,11 @@ void lcd_set_status(StatusMessage msg)
 #ifdef USE_LCD
         char s[9];
         switch(msg) {
-                case STAT_BOOTING:  strcpy(s, "BOOTING "); break;
-                case STAT_READY:    strcpy(s, "READY   "); break;
-                case STAT_SHUTDOWN: strcpy(s, "SHUTDOWN"); break;
-                default:            strcpy(s, "        ");
+                case STAT_BOOTING:      strcpy(s, "BOOTING "); break;
+                case STAT_READY:        strcpy(s, "READY   "); break;
+                case STAT_SHUTDOWN:     strcpy(s, "SHUTDOWN"); break;
+                case STAT_READER_ERROR: strcpy(s, "RFID ERR"); break;
+                default:                strcpy(s, "        ");
         }
         lcd_write_string(s, 0, 56);
 #endif

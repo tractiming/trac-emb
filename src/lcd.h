@@ -16,7 +16,8 @@ typedef enum {
 typedef enum {
         STAT_BOOTING,
         STAT_READY,
-        STAT_SHUTDOWN
+        STAT_SHUTDOWN,
+        STAT_READER_ERROR
 } StatusMessage;
 
 void lcd_init(void);
