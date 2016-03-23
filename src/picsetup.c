@@ -2,18 +2,17 @@
 
 void setup_pins(void)
 {
-
-	// Set all analog input pins to digital mode.
-	ANSELA = 0;
-	ANSELB = 0;
+        // Set all analog input pins to digital mode.
+        ANSELA = 0;
+        ANSELB = 0;
 
         // Set all pins to digital inputs.
         //TRISA = 0xFFFF;
         //TRISB = 0xFFFF;
 
         // Set the pins for uart communication.
-	U2RXRbits.U2RXR = 0b0100; // U2RX (pin 17, 5V tolerant)
-	RPB9Rbits.RPB9R = 0b0010; // U2TX (pin 18, 5V tolerant)
+        U2RXRbits.U2RXR = 0b0100; // U2RX (pin 17, 5V tolerant)
+        RPB9Rbits.RPB9R = 0b0010; // U2TX (pin 18, 5V tolerant)
         U1RXRbits.U1RXR = 0b0010; // U1RX (pin 12)
         RPA0Rbits.RPA0R = 0b0001; // U1TX (pin 2)
 
@@ -40,6 +39,11 @@ void setup_pins(void)
         TRISAbits.TRISA1 = 0;      // RA1 (pin 3, lcd reset line)
         RPB2Rbits.RPB2R = 0b0011;  // SDO1 (pin 6, SDO1 out)
 #endif
+
+#ifdef USE_BATTERY_MONITOR
+        // Set RA3 (Pin 10) to be battery level input.
+        TRISAbits.TRISA3 = 1;
+#endif
 }
 
 /* Restarts pic (for example, if an initialization task fails).*/
@@ -56,4 +60,12 @@ void setup_shutdown_int(void)
         mINT3SetIntSubPriority(0);
         mINT3ClearIntFlag();
         mINT3IntEnable(1);
+}
+
+/* Set up change interrupt for voltage indicator. */
+void setup_battery_int(void)
+{
+#ifdef USE_BATTERY_MONITOR
+        ConfigINT1(EXT_INT_ENABLE | RISING_EDGE_INT | EXT_INT_PRI_5);
+#endif
 }

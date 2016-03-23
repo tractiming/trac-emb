@@ -15,8 +15,8 @@ GsmState gsm_state;
 unsigned gsm_on;
 
 //const char apn[] = "Internetd.gdsp"; //vodafone
-//const char apn[] = "apn.konekt.io";    //konekt
-const char apn[] = "att.mvno";       // AT&T (H2O, RedPocket)
+const char apn[] = "apn.konekt.io";    //konekt
+//const char apn[] = "att.mvno";       // AT&T (H2O, RedPocket)
 const char split_endpoint[] = "https://trac-us.appspot.com/api/splits/";
 const char time_endpoint[] = "https://trac-us.appspot.com/api/time/";
 const char time_fmt[] = "%Y/%m/%d %H:%M:%S";

@@ -6,7 +6,6 @@
 #include <plib.h>
 
 #ifdef SETUP
-
 #pragma config IOL1WAY  = OFF       // Peripheral Pin Select Configuration, allow mult reconfig
 #pragma config PMDL1WAY = OFF	    // Peripheral Module Disable Config, allow mult reconfig
 #pragma config FPLLODIV = DIV_2     // PLL Output Divider
@@ -27,10 +26,10 @@
 #pragma config ICESEL   = ICS_PGx1  // ICE/ICD Comm Channel Select
 #pragma config JTAGEN   = OFF       // JTAG Enable
 #pragma config DEBUG    = OFF       // Background Debugger Enable
-
 #endif
 
-#define USE_LCD                 /* Uncomment to enable screen functionality. */
+#define USE_LCD                /* Uncomment to enable screen functionality. */
+#define USE_BATTERY_MONITOR      /* Uncomment to enable battery monitoring. */
 
 #define SYS_FREQ 40000000L
 #define PBCLK  (SYS_FREQ)
@@ -38,15 +37,22 @@
 #define Fsck	50000
 #define BRG_VAL ((PBCLK/2/Fsck)-2)
 
-#define POWERKEY LATAbits.LATA2
-#define GSM_LED  LATBbits.LATB4
-#define RFID_LED LATBbits.LATB15
-#define KILL     LATBbits.LATB14
+#define POWERKEY        LATAbits.LATA2
+#define GSM_LED         LATBbits.LATB4
+#define RFID_LED        LATBbits.LATB15
+#define KILL            LATBbits.LATB14
+
+#ifdef USE_BATTERY_MONITOR
+ #define BATTERY_STATUS  PORTAbits.RA3
+#else
+ #define BATTERY_STATUS  0
+#endif
 
 #define MAX_STR_LEN 250
 
 void setup_pins(void);
 void pic_reset(void);
 void setup_shutdown_int(void);
+void setup_battery_int(void);
 
 #endif	/* PICSETUP_H */

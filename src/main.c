@@ -6,10 +6,11 @@
 #include "lcd.h"
 
 #define LOOP_DELAY 2750                   // Delay between updates (in msec)
-#define RSSI_CHECK    7                   // Interval yo check signal strength
 #define RFID_CHECK   10                   // Interval to check alien status
+#define STAT_CHECK    7                   // Interval to check signal/battery
 
 const char reader_id[] = "Z2112";         // Unique reader id for this device
+int battery_state = 1;
 
 int main(void)
 {
@@ -35,6 +36,7 @@ int main(void)
         lcd_set_status(STAT_BOOTING);
         lcd_set_tags(0);
 
+        setup_battery_int();
         setup_shutdown_int();
         uart_init(GSM_UART, GSM_BAUDRATE, GSM_RX_INT, GSM_INT_VEC,
                   INT_PRIORITY_LEVEL_6, INT_SUB_PRIORITY_LEVEL_0);
@@ -43,6 +45,10 @@ int main(void)
 
         INTEnableSystemMultiVectoredInt();
         delay_ms(5000);
+
+        // Voltage too low when unit turned on.
+        if (BATTERY_STATUS)
+                battery_state = 0;
 
         while (gsm_not_init) {
                 gsm_not_init = gsm_init(&gsm_state);
@@ -86,12 +92,18 @@ int main(void)
                 delay_ms(LOOP_DELAY);
 
                 loop++;
-                if (loop == RSSI_CHECK) {
+                if (loop == STAT_CHECK) {
                         rssi = gsm_get_signal_strength(&gsm_state);
                         if ((rssi == 99) || (rssi <= GSM_LOW_SIGNAL))
                                 lcd_set_cellular(CELLULAR_LOW);
                         else
                                 lcd_set_cellular(CELLULAR_OK);
+
+                        if (!battery_state) {
+                                lcd_set_battery(BATTERY_LOW);
+                                // Reset to avoid updating every loop
+                                battery_state = 1;
+                        }
                         loop = 0;
                 }
 
@@ -145,7 +157,7 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
 
         // Send shutoff signal to GSM.
         if (gsm_on)
-            gsm_pwr_off(&gsm_state);
+                gsm_pwr_off(&gsm_state);
 
         // Send KILL signal to timer. (Not implemented.)
 
@@ -158,3 +170,12 @@ void __ISR(_EXTERNAL_3_VECTOR, IPL5SOFT) ShutdownISR(void)
 
         mINT3ClearIntFlag();
 }
+
+#ifdef USE_BATTERY_MONITOR
+/* Battery monitor ISR. */
+void __ISR(_EXTERNAL_1_VECTOR, IPL5AUTO) voltage_isr(void)
+{
+        battery_state = 0;
+        INTClearFlag(INT_INT1);
+}
+#endif
