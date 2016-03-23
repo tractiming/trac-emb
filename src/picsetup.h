@@ -29,7 +29,7 @@
 #endif
 
 #define USE_LCD                /* Uncomment to enable screen functionality. */
-//#define USE_BATTERY_MONITOR    /* Uncomment to enable battery monitoring. */
+#define USE_BATTERY_MONITOR      /* Uncomment to enable battery monitoring. */
 
 #define SYS_FREQ 40000000L
 #define PBCLK  (SYS_FREQ)

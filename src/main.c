@@ -19,7 +19,6 @@ int main(void)
         int rssi;
         int loop = 0;
         int alien_chk = 0;
-        int battery_state = 1;
         char ctime[50];
         char post_msg[MAX_MSG_LEN];
 
@@ -100,8 +99,11 @@ int main(void)
                         else
                                 lcd_set_cellular(CELLULAR_OK);
 
-                        if (!battery_state)
+                        if (!battery_state) {
                                 lcd_set_battery(BATTERY_LOW);
+                                // Reset to avoid updating every loop
+                                battery_state = 1;
+                        }
                         loop = 0;
                 }
 
