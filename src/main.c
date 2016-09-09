@@ -9,7 +9,7 @@
 #define RFID_CHECK   10                   // Interval to check alien status
 #define STAT_CHECK    7                   // Interval to check signal/battery
 
-const char reader_id[] = "Z2112";         // Unique reader id for this device
+const char reader_id[] = "C1015";         // Unique reader id for this device
 int battery_state = 1;
 
 int main(void)

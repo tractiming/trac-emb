@@ -17,12 +17,12 @@ unsigned gsm_on;
 //const char apn[] = "Internetd.gdsp"; //vodafone
 const char apn[] = "apn.konekt.io";    //konekt
 //const char apn[] = "att.mvno";       // AT&T (H2O, RedPocket)
-const char split_endpoint[] = "https://trac-us.appspot.com/api/splits/";
-const char time_endpoint[] = "https://trac-us.appspot.com/api/time/";
+const char split_endpoint[] = "https://tracchicago.com/api/splits/";
+const char time_endpoint[] = "https://tracchicago.com/api/time/";
 const char time_fmt[] = "%Y/%m/%d %H:%M:%S";
 
 const char http_header[] = "POST /api/splits/ HTTP/1.1\r\n"
-                           "Host: trac-us.appspot.com\r\n"
+                           "Host: tracchicago.com\r\n"
                            "Authorization: Bearer rwtOjDavSaqaBqp5J79tNVdwj96Zoe\r\n"
                            "Accept: */*\r\n"
                            "User-Agent: QUECTEL_MODULE\r\n"
@@ -192,8 +192,8 @@ static int gsm_cfg_ssl(GsmState *s)
 {
         const char * cmds[] = {
                 "AT+QHTTPCFG=\"sslctxid\",1\r",
-                "AT+QSSLCFG=\"sslversion\",1,1\r",
-                "AT+QSSLCFG=\"ciphersuite\",1,0X0005\r",
+                "AT+QSSLCFG=\"sslversion\",1,3\r",
+                "AT+QSSLCFG=\"ciphersuite\",1,0XFFFF\r",
                 "AT+QSSLCFG=\"seclevel\",1,0\r"
         };
 

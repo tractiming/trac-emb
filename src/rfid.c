@@ -38,17 +38,12 @@ static int parse_split_data(char *data, Split *s)
                         tok2 = (char *)strtok_r(NULL, "\0", &end_tok);
                         strcpy(s->time, tok2);
                         last = 1;
-                } else if (strstr(tok1, "Ant")) {
-                        tok2 = (char *)strtok_r(tok1, ":", &end_tok);
-                        tok2 = (char *)strtok_r(NULL, "\0", &end_tok);
-                        strcpy(s->ant, tok2);
-                        ant = 1;
                 }
 
                 tok1 = (char *)strtok_r(NULL, sep, &end_str);
         }
 
-        if (!(tag && last && ant))
+        if (!(tag && last))
                 return -1;
 
         return 0;
